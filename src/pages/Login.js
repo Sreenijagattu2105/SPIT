@@ -123,13 +123,15 @@ function Login() {
         }
     };
 
-    return (
-        <div className="login-page">
-            <div className="login-container">
-                <h1>Login</h1>
+   
+return (
+    <div className="login-page">
+        <div className="login-container">
+            <h1>Login</h1>
 
-                <p>Login to access your SPIT account.</p>
+            <p>Login to access your SPIT account.</p>
 
+            <div className="login-form-box">
                 <form onSubmit={handleLogin}>
                     <label>Select Role</label>
                     <select
@@ -162,28 +164,30 @@ function Login() {
 
                     <button type="submit">Login</button>
                 </form>
-
-                <p>
-                    <button
-                        type="button"
-                        onClick={() => navigate("/forgot-password")}
-                    >
-                        Forgot Password?
-                    </button>
-                </p>
-
-                <p>
-                    Don't have an account?{" "}
-                    <button
-                        type="button"
-                        onClick={() => navigate("/register")}
-                    >
-                        Register
-                    </button>
-                </p>
             </div>
+
+            <p>
+                <button
+                    type="button"
+                    onClick={() => navigate("/forgot-password")}
+                >
+                    Forgot Password?
+                </button>
+            </p>
+
+            <p>
+                Don't have an account?{" "}
+                <button
+                    type="button"
+                    onClick={() => navigate("/register")}
+                >
+                    Register
+                </button>
+            </p>
         </div>
-    );
+    </div>
+);
+
 }
 
 export default Login;

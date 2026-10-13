@@ -27,7 +27,7 @@ html {
 
 body {
     margin: 0;
-    padding-top: 10px;
+    padding-top: 200px;
     font-family: Arial, Helvetica, sans-serif;
     color: var(--text);
 
@@ -256,7 +256,7 @@ button:disabled {
     );
 
     border-radius: 14px;
-    border-bottom: 3px solid var(--primary);
+    border-bottom: 5px solid var(--primary);
 }
 
 .career-resources-intro,
@@ -458,6 +458,7 @@ button:disabled {
 
 .home-container {
     text-align: center;
+    
 }
 
 .welcome-banner {
@@ -699,7 +700,9 @@ button:disabled {
 
 .application-card,
 .saved-opportunity-card {
-    margin-bottom: 20px;
+    max-width: 850px;
+    width: 100%;
+    margin: 0 auto 20px;
     text-align: left;
 }
 
@@ -882,12 +885,25 @@ form textarea:focus {
 }
 
 .profile-container form {
-    max-width: 700px;
+    
+    max-width: 750px;
+    width: 100%;
+    margin: 25px auto;
     padding: 25px;
     text-align: left;
     background: #F8FEFF;
     border: 1px solid var(--border);
     border-radius: 12px;
+    
+}
+/* Center only the main profile section headings */
+.profile-container form h2 {
+    text-align: center;
+}
+
+/* Keep field labels aligned to the left */
+.profile-container form label {
+    text-align: left;
 }
 
 .profile-container input:disabled {
@@ -1044,7 +1060,7 @@ footer p {
 
 @media (max-width: 600px) {
     body {
-        padding-top: 145px;
+        padding-top: 200px;
     }
 
     .navbar {
@@ -1867,7 +1883,7 @@ footer p {
     text-align: center;
     background: linear-gradient(135deg, #E0F7FA, #F4FCFC);
     border: 1px solid #D6EFF2;
-    border-bottom: 3px solid #00BCD4;
+    border-bottom: 5px solid #00BCD4;
     border-radius: 14px;
 }
 
@@ -2801,12 +2817,12 @@ button.applied-button:hover {
 }
 
 .resume-card {
-    max-width: 1000px;
+    max-width: 1135px;
     margin: 0 auto;
     padding: 35px;
     background: #FFFFFF;
     border: 1px solid #D6EFF2;
-    border-left: 5px solid #00BCD4;
+    border-left: none;
     border-radius: 16px;
     box-shadow: 0 5px 18px rgba(0, 100, 110, 0.08);
 }
@@ -2829,6 +2845,8 @@ button.applied-button:hover {
     background: #F4FCFC;
     border: 1px solid #D6EFF2;
     border-radius: 12px;
+    border-left: 5px solid #00BCD4;
+
 }
 
 .resume-upload-section h2 {
@@ -3588,7 +3606,7 @@ body.dark-theme .opportunity-management-table tbody tr:hover {
 
 .interview-progress-page {
     width: min(1100px, calc(100% - 32px));
-    margin: 30px auto;
+    margin: 100px auto;
     padding: 28px;
     box-sizing: border-box;
     color: #344054;
@@ -3634,6 +3652,9 @@ body.dark-theme .opportunity-management-table tbody tr:hover {
     border: 1px solid #d6edf1;
     border-radius: 14px;
     box-shadow: 0 5px 18px rgba(0, 120, 140, 0.07);
+     max-width: 850px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .interview-company-heading {
@@ -4573,5 +4594,65 @@ body.dark-theme .opportunity-management-table tbody tr:hover {
         padding-top: 64px;
     }
 }
-/* Add top spacing to Interview Progress and Saved Opportunities */
+.saved-opportunities-subtitle {
+    text-align: center;
+    color: #607D8B;
+    font-size: 16px;
+    margin-top: 8px;
+    margin-bottom: 25px;
+}
 
+
+/* Outer white box - NO BORDER */
+.login-container,
+.register-container,
+.forgot-password-container {
+    background: #FFFFFF;
+    border: none !important;
+    box-shadow: none;
+    border-radius: 16px;
+    box-sizing: border-box;
+}
+
+/* Inner box - cyan left border only */
+.login-form-box,
+.register-form-box,
+.forgot-password-form-box {
+    background: #F4FCFC;
+    border: none;
+    border-left: 5px solid #00BCD4;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 25px 0;
+    box-sizing: border-box;
+}
+
+/* Prevent border or outline on outer boxes, including hover */
+.login-container,
+.login-container:hover,
+.register-container,
+.register-container:hover,
+.forgot-password-container,
+.forgot-password-container:hover {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Keep the cyan left border only on inner boxes */
+.login-form-box,
+.register-form-box,
+.forgot-password-form-box {
+    border: none;
+    border-left: 5px solid #00BCD4;
+    outline: none;
+}
+
+/* Increase only the outer box width */
+.login-container,
+.register-container,
+.forgot-password-container {
+    width: 50%;
+    max-width: 100%;
+    box-sizing: border-box;
+}

@@ -204,6 +204,11 @@ function SavedOpportunities() {
     <div className="container mt-4 saved-opportunities-page">
       <h2 className="mb-4">Saved Opportunities</h2>
 
+
+<p className="saved-opportunities-subtitle">
+    Keep your favorite career opportunities saved in one place
+    and access them whenever you're ready to apply.
+</p>
       {savedOpportunities.length === 0 ? (
         <div className="alert alert-info">
           You have not saved any opportunities yet.

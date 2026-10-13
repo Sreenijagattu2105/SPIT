@@ -23,32 +23,33 @@ function ForgotPassword() {
         setEmail("");
     };
 
-    return (
-        <div className="forgot-password-page">
+    
+return (
+    <div className="forgot-password-page">
         <div className="forgot-password-container">
-
             <h1>Forgot Password?</h1>
 
             <p>
                 Enter your registered email address to reset your password.
             </p>
 
-            <form onSubmit={handleSubmit}>
+            <div className="forgot-password-form-box">
+                <form onSubmit={handleSubmit}>
+                    <label>Email</label>
 
-                <label>Email</label>
+                    <input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
 
-                <input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-
-                <button type="submit">
-                    Send Reset Instructions
-                </button>
-
-            </form>
+                    <button type="submit">
+                        Send Reset Instructions
+                    </button>
+                </form>
+            </div>
 
             <button
                 type="button"
@@ -56,9 +57,10 @@ function ForgotPassword() {
             >
                 Back to Login
             </button>
-          </div>
         </div>
-    );
+    </div>
+);
+
 }
 
 export default ForgotPassword;

@@ -162,16 +162,18 @@ function Register() {
         navigate("/login");
     };
 
-    return (
-        <div className="register-page">
-            <div className="register-container">
-                <h1>Registration</h1>
+   
+return (
+    <div className="register-page">
+        <div className="register-container">
+            <h1>Registration</h1>
 
-                <p>
-                    Create your SPIT account to explore internships
-                    and placement opportunities.
-                </p>
+            <p>
+                Create your SPIT account to explore internships
+                and placement opportunities.
+            </p>
 
+            <div className="register-form-box">
                 <form onSubmit={handleRegister}>
                     <label>Full Name</label>
                     <input
@@ -220,19 +222,21 @@ function Register() {
 
                     <button type="submit">Register</button>
                 </form>
-
-                <p>
-                    Already have an account?{" "}
-                    <button
-                        type="button"
-                        onClick={() => navigate("/login")}
-                    >
-                        Login
-                    </button>
-                </p>
             </div>
+
+            <p>
+                Already have an account?{" "}
+                <button
+                    type="button"
+                    onClick={() => navigate("/login")}
+                >
+                    Login
+                </button>
+            </p>
         </div>
-    );
+    </div>
+);
+
 }
 
 export default Register;

@@ -8,10 +8,10 @@ function About() {
         <div className="about-container">
 
             {/* About SPIT */}
-
+  <h1>About Us</h1>
             <section className="about-section">
 
-                <h1>About SPIT</h1>
+              
 
                 <h2>
                     Smart Internship & Placement Tracker

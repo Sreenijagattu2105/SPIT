@@ -797,15 +797,7 @@ function InterviewProgress() {
         </>
       )}
 
-      <div className="interview-back-section">
-        <button
-          type="button"
-          className="interview-secondary-button"
-          onClick={() => navigate("/my-applications")}
-        >
-          Back to My Applications
-        </button>
-      </div>
+      
     </div>
   );
 }
