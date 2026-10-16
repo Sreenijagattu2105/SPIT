@@ -154,12 +154,9 @@ function Opportunities() {
 
           }, []);
 
-
-
-          
 const handleShare = (opportunity) => {
     const shareUrl =
-        `${window.location.origin}/opportunity-details?id=${encodeURIComponent(opportunity.id)}`;
+        `https://spit-sage.vercel.app/opportunity-details?id=${encodeURIComponent(opportunity.id)}`;
 
     const message =
         `Check out this opportunity at ${opportunity.company}: ${opportunity.title}\n\n${shareUrl}`;
