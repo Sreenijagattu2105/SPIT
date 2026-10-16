@@ -227,7 +227,7 @@ function MyApplications() {
             }
         >
             <ExternalLink size={18} />
-            Visit Company Website
+            Visit Website
         </button>
     )}
 

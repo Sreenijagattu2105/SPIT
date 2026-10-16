@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { LayoutDashboard, Users, BriefcaseBusiness, ClipboardList, ChartNoAxesCombined, Settings, Bell, LogOut } from "lucide-react";
 import spitLogo from "../assets/spit_logo.png";
 
@@ -40,8 +41,52 @@ const links = [
     }
 ];
 
+function getUnreadNotificationCount() {
+    try {
+        const notifications = JSON.parse(
+            localStorage.getItem("coordinatorNotifications") || "[]"
+        );
+
+        if (!Array.isArray(notifications)) return 0;
+
+        return notifications.filter(
+            (notification) => notification.read !== true
+        ).length;
+    } catch {
+        return 0;
+    }
+}
+
 export default function CoordinatorNavbar() {
     const navigate = useNavigate();
+
+    const [unreadCount, setUnreadCount] = useState(
+        getUnreadNotificationCount
+    );
+
+    useEffect(() => {
+        const updateUnreadCount = () => {
+            setUnreadCount(getUnreadNotificationCount());
+        };
+
+        updateUnreadCount();
+
+        window.addEventListener(
+            "coordinatorNotificationsChange",
+            updateUnreadCount
+        );
+
+        window.addEventListener("storage", updateUnreadCount);
+
+        return () => {
+            window.removeEventListener(
+                "coordinatorNotificationsChange",
+                updateUnreadCount
+            );
+
+            window.removeEventListener("storage", updateUnreadCount);
+        };
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem("isLoggedIn");
@@ -68,8 +113,17 @@ return (
                         `coordinator-nav-link ${isActive ? "active" : ""}`
                     }
                 >
-                    <Icon size={20} />
-                    <span>{name}</span>
+                    <div className="coordinator-nav-icon-wrapper">
+    <Icon size={20} />
+
+    {name === "Notifications" && unreadCount > 0 && (
+        <span className="coordinator-notification-badge">
+            {unreadCount > 9 ? "9+" : unreadCount}
+        </span>
+    )}
+</div>
+
+<span>{name}</span>
                 </NavLink>
             ))}
         </div>
