@@ -1,6 +1,6 @@
 
 import { Navigate, useNavigate } from "react-router-dom";
-
+import { ChevronLeft} from "lucide-react";
 function AptitudeResources() {
     const navigate = useNavigate();
 
@@ -16,7 +16,7 @@ function AptitudeResources() {
         <div className="resource-detail-page">
             <div className="resource-detail-container">
 
-                <h1>Aptitude Resources</h1>
+                <h1>APTITUDE RESOURCES</h1>
 
                 <p className="resource-detail-intro">
                     Prepare for placement aptitude tests with important topics,
@@ -34,7 +34,7 @@ function AptitudeResources() {
                         mathematical understanding, calculation speed, and
                         problem-solving skills.
                     </p>
-
+<div className="resource-topic-box">
                     <h3>1. Number Systems</h3>
                     <ul>
                         <li>Natural numbers, whole numbers, integers, rational and irrational numbers.</li>
@@ -47,7 +47,8 @@ function AptitudeResources() {
                         <li>Squares, cubes, square roots, and cube roots.</li>
                         <li>Number patterns and cyclicity.</li>
                     </ul>
-
+</div>
+<div className="resource-topic-box">
                     <h3>2. Percentages</h3>
                     <ul>
                         <li>Conversion between fractions, decimals, and percentages.</li>
@@ -57,7 +58,8 @@ function AptitudeResources() {
                         <li>Population growth and depreciation problems.</li>
                         <li>Percentage-based comparison questions.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>3. Profit, Loss and Discount</h3>
                     <ul>
                         <li>Cost price and selling price.</li>
@@ -67,7 +69,8 @@ function AptitudeResources() {
                         <li>Finding selling price when profit or loss is given.</li>
                         <li>Problems involving dishonest weights.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>4. Ratio, Proportion and Partnership</h3>
                     <ul>
                         <li>Basic ratios and equivalent ratios.</li>
@@ -77,7 +80,8 @@ function AptitudeResources() {
                         <li>Mixtures and alligation.</li>
                         <li>Age-related ratio problems.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>5. Averages and Mixtures</h3>
                     <ul>
                         <li>Simple averages.</li>
@@ -87,7 +91,8 @@ function AptitudeResources() {
                         <li>Finding a missing value using the average.</li>
                         <li>Replacement and mixture problems.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>6. Time and Work</h3>
                     <ul>
                         <li>Work completed per day.</li>
@@ -97,7 +102,8 @@ function AptitudeResources() {
                         <li>Pipes and cisterns.</li>
                         <li>Problems involving alternate working days.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>7. Time, Speed and Distance</h3>
                     <ul>
                         <li>Distance, speed, and time calculations.</li>
@@ -108,7 +114,8 @@ function AptitudeResources() {
                         <li>Boats and streams.</li>
                         <li>Race and circular track problems.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>8. Simple and Compound Interest</h3>
                     <ul>
                         <li>Principal, rate, time, and interest.</li>
@@ -118,7 +125,8 @@ function AptitudeResources() {
                         <li>Annual, half-yearly, and quarterly compounding.</li>
                         <li>Growth and depreciation calculations.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>9. Algebra and Equations</h3>
                     <ul>
                         <li>Linear equations in one and two variables.</li>
@@ -128,7 +136,8 @@ function AptitudeResources() {
                         <li>Inequalities.</li>
                         <li>Problems based on algebraic expressions.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>10. Probability and Combinatorics</h3>
                     <ul>
                         <li>Basic probability.</li>
@@ -138,7 +147,8 @@ function AptitudeResources() {
                         <li>Combinations and selections.</li>
                         <li>Problems involving coins, dice, and cards.</li>
                     </ul>
-
+                </div>
+<div className="resource-topic-box">
                     <h3>11. Other Important Topics</h3>
                     <ul>
                         <li>Problems on ages.</li>
@@ -149,12 +159,13 @@ function AptitudeResources() {
                         <li>Data sufficiency.</li>
                     </ul>
                 </div>
-
+</div>
                 {/* Important Quantitative Formulas */}
 
                 <div className="resource-section">
                     <h2>Important Quantitative Aptitude Formulas</h2>
 
+<div className="resource-topic-box">
                     <h3>1. Percentage</h3>
                     <ul>
                         <li>Percentage = (Part / Whole) × 100</li>
@@ -162,7 +173,8 @@ function AptitudeResources() {
                         <li>New value after an increase of r% = Original Value × (1 + r/100)</li>
                         <li>New value after a decrease of r% = Original Value × (1 - r/100)</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>2. Profit and Loss</h3>
                     <ul>
                         <li>Profit = Selling Price - Cost Price</li>
@@ -172,7 +184,8 @@ function AptitudeResources() {
                         <li>Discount = Marked Price - Selling Price</li>
                         <li>Discount % = (Discount / Marked Price) × 100</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>3. Average, Speed and Work</h3>
                     <ul>
                         <li>Average = Sum of Observations / Number of Observations</li>
@@ -182,7 +195,8 @@ function AptitudeResources() {
                         <li>Work completed = Work Rate × Time</li>
                         <li>If a person completes a job in x days, their one-day work is 1/x.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>4. Interest and Probability</h3>
                     <ul>
                         <li>Simple Interest = (Principal × Rate × Time) / 100</li>
@@ -192,6 +206,7 @@ function AptitudeResources() {
                         <li>Permutation: nPr = n! / (n-r)!</li>
                         <li>Combination: nCr = n! / (r!(n-r)!)</li>
                     </ul>
+                    </div>
                 </div>
 
                 {/* Logical Reasoning */}
@@ -204,7 +219,7 @@ function AptitudeResources() {
                         patterns, interpret information, analyze relationships,
                         and draw conclusions.
                     </p>
-
+<div className="resource-topic-box">
                     <h3>1. Series and Patterns</h3>
                     <ul>
                         <li>Number series.</li>
@@ -214,7 +229,8 @@ function AptitudeResources() {
                         <li>Find the incorrect term.</li>
                         <li>Number and letter patterns.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>2. Coding and Decoding</h3>
                     <ul>
                         <li>Letter shifting patterns.</li>
@@ -223,7 +239,8 @@ function AptitudeResources() {
                         <li>Substitution coding.</li>
                         <li>Pattern-based coding and decoding.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>3. Relationships and Directions</h3>
                     <ul>
                         <li>Blood relations.</li>
@@ -233,7 +250,8 @@ function AptitudeResources() {
                         <li>Position and orientation.</li>
                         <li>Ranking and order.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>4. Arrangements and Puzzles</h3>
                     <ul>
                         <li>Linear seating arrangements.</li>
@@ -243,7 +261,8 @@ function AptitudeResources() {
                         <li>Grouping and selection problems.</li>
                         <li>Constraint-based logic puzzles.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>5. Analytical Reasoning</h3>
                     <ul>
                         <li>Analogies and classification.</li>
@@ -257,6 +276,7 @@ function AptitudeResources() {
                         <li>Calendars and clocks.</li>
                         <li>Non-verbal reasoning and figure patterns.</li>
                     </ul>
+                    </div>
                 </div>
 
                 {/* Verbal Ability */}
@@ -268,7 +288,7 @@ function AptitudeResources() {
                         Verbal ability measures your English comprehension,
                         grammar, vocabulary, and ability to communicate clearly.
                     </p>
-
+<div className="resource-topic-box">
                     <h3>1. Vocabulary</h3>
                     <ul>
                         <li>Synonyms and antonyms.</li>
@@ -278,7 +298,8 @@ function AptitudeResources() {
                         <li>Word usage in sentences.</li>
                         <li>Contextual vocabulary.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>2. Grammar</h3>
                     <ul>
                         <li>Parts of speech.</li>
@@ -292,7 +313,8 @@ function AptitudeResources() {
                         <li>Direct and indirect speech.</li>
                         <li>Sentence correction and error spotting.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>3. Reading and Sentence Skills</h3>
                     <ul>
                         <li>Reading comprehension.</li>
@@ -305,7 +327,8 @@ function AptitudeResources() {
                         <li>Identifying the main idea of a passage.</li>
                         <li>Drawing inferences from a passage.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>4. Written Communication</h3>
                     <ul>
                         <li>Professional email writing.</li>
@@ -314,12 +337,14 @@ function AptitudeResources() {
                         <li>Common grammar mistakes.</li>
                         <li>Writing grammatically correct sentences.</li>
                     </ul>
+                    </div>
                 </div>
 
                 {/* Data Interpretation */}
 
                 <div className="resource-section">
                     <h2>Data Interpretation</h2>
+                    <div className="resource-topic-box">
 <h3>1. Data Interpretation</h3>
                     <p>
                         Data interpretation involves analyzing numerical
@@ -339,7 +364,8 @@ function AptitudeResources() {
                         <li>Missing data problems.</li>
                         <li>Caselet-based data interpretation.</li>
                     </ul>
-
+                    </div>
+<div className="resource-topic-box">
                     <h3>2. Data Interpretation Tips</h3>
                     <ul>
                         <li>Read the chart title, labels, units, and legend carefully.</li>
@@ -348,6 +374,7 @@ function AptitudeResources() {
                         <li>Check whether the question asks for a percentage, difference, ratio, or average.</li>
                         <li>Avoid rounding too early in a calculation.</li>
                     </ul>
+                    </div>
                 </div>
 
                 {/* Common Placement Assessment Topics */}
@@ -360,7 +387,7 @@ function AptitudeResources() {
                         assessment. These are additional areas worth preparing
                         for alongside quantitative, logical, and verbal aptitude.
                     </p>
-
+ <div className="resource-topic-box">
                     <h3>1. Analytical and Critical Thinking</h3>
                     <ul>
                         <li>Evaluating arguments.</li>
@@ -369,7 +396,8 @@ function AptitudeResources() {
                         <li>Analyzing patterns and relationships.</li>
                         <li>Solving multi-step reasoning problems.</li>
                     </ul>
-
+                    </div>
+ <div className="resource-topic-box">
                     <h3>2. Basic Computer Awareness</h3>
                     <ul>
                         <li>Computer hardware and software fundamentals.</li>
@@ -378,7 +406,8 @@ function AptitudeResources() {
                         <li>Database fundamentals.</li>
                         <li>Basic programming logic and output questions.</li>
                     </ul>
-
+                    </div>
+ <div className="resource-topic-box">
                     <h3>3. Programming Logic</h3>
                     <ul>
                         <li>Tracing loops and conditional statements.</li>
@@ -387,13 +416,14 @@ function AptitudeResources() {
                         <li>Basic number and pattern programs.</li>
                         <li>Identifying logical errors in code.</li>
                     </ul>
+                    </div>
                 </div>
 
                 {/* Preparation Tips */}
 
                 <div className="resource-section">
                     <h2>Aptitude Preparation Tips</h2>
-
+<br></br>
                     <ul>
                         <li>Practice aptitude questions regularly rather than studying only before a test.</li>
                         <li>Learn important formulas and understand when to use them.</li>
@@ -414,7 +444,7 @@ function AptitudeResources() {
 
                 <div className="resource-section">
                     <h2>Simple Daily Practice Plan</h2>
-
+<br></br>
                     <p>
                         Use this sample 80-minute plan as a starting point.
                         Adjust the duration based on your schedule and the
@@ -443,7 +473,7 @@ function AptitudeResources() {
 
                 <div className="resource-section">
                     <h2>Time Management During Aptitude Tests</h2>
-
+<br></br>
                     <ul>
                         <li>Read each question carefully before solving it.</li>
                         <li>Check the number of questions and total test duration.</li>
@@ -462,7 +492,7 @@ function AptitudeResources() {
 
                 <div className="resource-section">
                     <h2>Mock Test Preparation</h2>
-
+<br></br>
                     <p>
                         Mock tests help you become familiar with assessment
                         formats, manage time, and identify topics that require
@@ -495,7 +525,7 @@ function AptitudeResources() {
 
                 <div className="resource-section">
                     <h2>Common Aptitude Test Mistakes</h2>
-
+<br></br>
                     <ul>
                         <li>Memorizing formulas without understanding their use.</li>
                         <li>Ignoring units during calculations.</li>
@@ -515,7 +545,7 @@ function AptitudeResources() {
 
                 <div className="resource-section">
                     <h2>Useful Online Practice Resources</h2>
-
+<br></br>
                     <ul>
                         <li>
                             <a
@@ -561,7 +591,7 @@ function AptitudeResources() {
                     className="back-resource-button"
                     onClick={() => navigate("/career-resources")}
                 >
-                    Back to Career Resources
+                 <ChevronLeft size={18} />    Back to Career Resources
                 </button>
 
             </div>

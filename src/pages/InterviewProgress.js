@@ -1,4 +1,10 @@
-
+import {
+    Pencil,
+    Save,
+    X,
+    Plus,
+    Trash2
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -348,7 +354,7 @@ function InterviewProgress() {
   return (
     <div className="my-applications-container interview-progress-page">
       <div className="interview-page-header">
-        <h1>Interview Progress</h1>
+        <h1>INTERVIEW PROGRESS</h1>
         <p>
           Track interview rounds, dates and results you receive from
           companies for opportunities applied to through SPIT.
@@ -461,7 +467,7 @@ function InterviewProgress() {
                           type="button"
                           onClick={saveOverallStatus}
                         >
-                          Save Status
+                           <Save size={18} /> Save Status
                         </button>
 
                         <button
@@ -469,7 +475,7 @@ function InterviewProgress() {
                           className="interview-secondary-button"
                           onClick={cancelOverallStatusEdit}
                         >
-                          Cancel
+                          <X size={18} />  Cancel
                         </button>
                       </div>
                     </>
@@ -490,7 +496,7 @@ function InterviewProgress() {
                           className="interview-secondary-button"
                           onClick={startOverallStatusEdit}
                         >
-                          Edit Status
+                         <Pencil size={18} />  Edit Status
                         </button>
                       </div>
                     </>
@@ -588,7 +594,7 @@ function InterviewProgress() {
 
                   <div className="interview-form-actions full-width">
                     <button type="submit">
-                      Add Interview Round
+                      <Plus size={18} /> Add Interview Round
                     </button>
                   </div>
                 </form>
@@ -691,7 +697,7 @@ function InterviewProgress() {
                                         saveRoundStatus(round.id)
                                       }
                                     >
-                                      Save Status
+                                      <Save size={18} /> Save Status
                                     </button>
 
                                     <button
@@ -701,7 +707,7 @@ function InterviewProgress() {
                                         cancelStatusEdit(round.id)
                                       }
                                     >
-                                      Cancel
+                                        <X size={18} />  Cancel
                                     </button>
                                   </>
                                 ) : (
@@ -712,7 +718,7 @@ function InterviewProgress() {
                                       startStatusEdit(round)
                                     }
                                   >
-                                    Edit Status
+                                   <Pencil size={18} />  Edit Status
                                   </button>
                                 )}
                               </div>
@@ -748,7 +754,8 @@ function InterviewProgress() {
                                         saveRoundNotes(round.id)
                                       }
                                     >
-                                      Save Notes
+                                             <Save size={18} />
+ Save Notes
                                     </button>
 
                                     <button
@@ -758,7 +765,7 @@ function InterviewProgress() {
                                         cancelNotesEdit(round.id)
                                       }
                                     >
-                                      Cancel
+                                     <X size={18} />   Cancel
                                     </button>
                                   </>
                                 ) : (
@@ -769,7 +776,7 @@ function InterviewProgress() {
                                       startNotesEdit(round)
                                     }
                                   >
-                                    Edit Notes
+                                  <Pencil size={18} />   Edit Notes
                                   </button>
                                 )}
                               </div>
@@ -782,7 +789,7 @@ function InterviewProgress() {
                                 className="interview-danger-button"
                                 onClick={() => removeRound(round.id)}
                               >
-                                Remove Round
+                               <Trash2 size={18} /> 
                               </button>
                             </div>
                           </div>

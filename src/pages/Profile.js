@@ -1,4 +1,4 @@
-
+import { Pencil, Save } from "lucide-react";
 import { useState } from "react";
 
 function Profile() {
@@ -177,34 +177,38 @@ function Profile() {
     return (
         <div className="profile-page">
             <div className="profile-container">
-                <h1>My Profile</h1>
+                <h1>MY PROFILE</h1>
 
                 <p>View and update your personal information.</p>
 
                 <form onSubmit={handleSave}>
                     <h2>Personal Information</h2>
 
-                    <label>Full Name</label>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        disabled={!isEditing}
-                    />
+                   
 
-                    <label>Email</label>
-                    <input type="email" value={email} disabled />
+<div className="profile-fields-white">
+    <label>Full Name</label>
+    <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        disabled={!isEditing}
+    />
 
-                    <label>Phone Number</label>
-                    <input
-                        type="text"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        disabled={!isEditing}
-                    />
+    <label>Email</label>
+    <input type="email" value={email} disabled />
+
+    <label>Phone Number</label>
+    <input
+        type="text"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        disabled={!isEditing}
+    />
+</div>
 
                     <h2>Education</h2>
-
+<div className="profile-fields-white">
                     <label>Highest Qualification</label>
                     <input
                         type="text"
@@ -231,9 +235,9 @@ function Profile() {
                         onChange={(e) => setGraduationYear(e.target.value)}
                         disabled={!isEditing}
                     />
-
+</div>
                     <h2>Skills</h2>
-
+<div className="profile-fields-white">
                     <label>Skills</label>
                     <input
                         type="text"
@@ -242,9 +246,9 @@ function Profile() {
                         onChange={(e) => setSkills(e.target.value)}
                         disabled={!isEditing}
                     />
-
+</div>
                     <h2>Projects</h2>
-
+<div className="profile-fields-white">
                     <label>Projects</label>
                     <input
                         type="text"
@@ -253,9 +257,9 @@ function Profile() {
                         onChange={(e) => setProjects(e.target.value)}
                         disabled={!isEditing}
                     />
-
+</div>
                     <h2>Certifications</h2>
-
+<div className="profile-fields-white">
                     <label>Certifications</label>
                     <input
                         type="text"
@@ -264,9 +268,9 @@ function Profile() {
                         onChange={(e) => setCertifications(e.target.value)}
                         disabled={!isEditing}
                     />
-
+</div>
                     <h2>Resume</h2>
-
+<div className="profile-fields-white">
                     <label>Upload Resume</label>
                     <input
                         type="file"
@@ -301,9 +305,9 @@ function Profile() {
                             Selected Resume: {resume}
                         </p>
                     )}
-
+</div>
                     <h2>Professional Links</h2>
-
+<div className="profile-fields-white">
                     <label>LinkedIn Profile</label>
                     <input
                         type="url"
@@ -321,20 +325,20 @@ function Profile() {
                         onChange={(e) => setGithub(e.target.value)}
                         disabled={!isEditing}
                     />
-
+</div>
                     <div className="profile-buttons">
                         <button
                             type="button"
                             onClick={() => setIsEditing(true)}
                         >
-                            Edit Profile
+                          <Pencil size={18} />  Edit Profile
                         </button>
 
                         <button
                             type="submit"
                             disabled={!isEditing}
                         >
-                            Save Profile
+                          <Save size={18} />   Save Profile
                         </button>
                     </div>
                 </form>

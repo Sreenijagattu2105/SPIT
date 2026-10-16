@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from "react-router-dom";
-
+import { ChevronLeft} from "lucide-react";
 function ResumeTips() {
 
     const navigate = useNavigate();
@@ -17,7 +17,7 @@ function ResumeTips() {
 
             <div className="resource-detail-container">
 
-                <h1>Resume Tips</h1>
+                <h1>RESUME TIPS</h1>
 
                 <p className="resource-detail-intro">
                     Learn how to create a clear, professional and
@@ -27,7 +27,7 @@ function ResumeTips() {
 
 
                 {/* 1. Resume Structure */}
-
+<div className="resource-tips-content">
                 <div className="resource-section">
 
                     <h2>1. Resume Structure</h2>
@@ -546,14 +546,14 @@ function ResumeTips() {
 
                 </div>
 
-
+</div>
                 {/* Back Button */}
 
                 <button
                     className="back-resource-button"
                     onClick={() => navigate("/career-resources")}
                 >
-                    Back to Career Resources
+                 <ChevronLeft size={18} />   Back to Career Resources
                 </button>
 
             </div>

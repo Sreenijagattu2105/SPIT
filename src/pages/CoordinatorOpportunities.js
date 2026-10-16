@@ -1,4 +1,11 @@
-
+import {ChevronLeft,  X,
+    Pencil,
+    Globe,
+    FileText,
+    GlobeLock,
+    Trash2,
+    Save,
+    RefreshCw} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -382,8 +389,10 @@ function CoordinatorOpportunities() {
 
   return (
     <div className="coordinator-dashboard-container">
-      <section className="coordinator-welcome">
-        <h1>Manage &amp; Publish Opportunities</h1>
+      <div className="coordinator-page-heading">
+        <h1>MANAGE &amp; PUBLISH OPPORTUNITIES</h1>
+        </div>
+        <section className="coordinator-welcome">
         <p>
           Create opportunities, save drafts, and publish listings for students.
         </p>
@@ -501,15 +510,29 @@ function CoordinatorOpportunities() {
             </label>
           </div>
 
-          <button type="submit">
-            {editingId !== null
-              ? "Update Opportunity"
-              : form.status === "Published"
-                ? "Publish Opportunity"
-                : form.status === "Unpublished"
-                  ? "Save as Unpublished"
-                  : "Save as Draft"}
-          </button>
+         <button type="submit">
+    {editingId !== null ? (
+        <>
+            <RefreshCw size={18} />
+            Update Opportunity
+        </>
+    ) : form.status === "Published" ? (
+        <>
+            <Globe size={18} />
+            Publish Opportunity
+        </>
+    ) : form.status === "Unpublished" ? (
+        <>
+            <GlobeLock size={18} />
+            Save as Unpublished
+        </>
+    ) : (
+        <>
+            <Save size={18} />
+            Save as Draft
+        </>
+    )}
+</button>
 
           {editingId !== null && (
             <button
@@ -520,7 +543,7 @@ function CoordinatorOpportunities() {
                 setMessage("");
               }}
             >
-              Cancel Edit
+            <X size={18} />  Cancel Edit
             </button>
           )}
         </form>
@@ -612,21 +635,31 @@ function CoordinatorOpportunities() {
                           type="button"
                           onClick={() => handleEdit(item)}
                         >
-                          Edit
+                        <Pencil size={18} /> 
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handlePublishToggle(item)}
                         >
-                          {status === "Published" ? "Unpublish" : "Publish"}
+                           {status === "Published" ? (
+        <>
+            <GlobeLock size={18} />
+            Unpublish
+        </>
+    ) : (
+        <>
+            <Globe size={18} />
+            Publish
+        </>
+    )}
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleDelete(item.id)}
                         >
-                          Delete
+                        <Trash2 size={18} />
                         </button>
                       </td>
                     </tr>
@@ -643,7 +676,7 @@ function CoordinatorOpportunities() {
           type="button"
           onClick={() => navigate("/coordinator-dashboard")}
         >
-          Back to Dashboard
+         <ChevronLeft size={18} /> Back to Dashboard
         </button>
       </section>
     </div>

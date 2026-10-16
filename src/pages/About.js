@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
+import {  UserPlus, ClipboardList, BriefcaseBusiness, BookOpen } from "lucide-react";
 
 function About() {
-
     const navigate = useNavigate();
 
     return (
         <div className="about-container">
 
             {/* About SPIT */}
-  <h1>About Us</h1>
+  <h1>ABOUT US</h1>
             <section className="about-section">
 
               
@@ -124,7 +124,7 @@ function About() {
                         <button
                             onClick={() => navigate("/register")}
                         >
-                            Register Now
+                            <UserPlus size={18} />Register Now
                         </button>
 
                     </div>
@@ -146,7 +146,7 @@ function About() {
                         <button
                             onClick={() => navigate("/opportunities")}
                         >
-                            Explore Opportunities
+                            <BriefcaseBusiness size={18} />Explore Opportunities
                         </button>
 
                     </div>
@@ -167,7 +167,7 @@ function About() {
                         <button
                             onClick={() => navigate("/opportunities")}
                         >
-                            Find Opportunities
+                            <BriefcaseBusiness size={18} />Find Opportunities
                         </button>
 
                     </div>
@@ -192,7 +192,7 @@ function About() {
                                 navigate("/login");
                             }}
                         >
-                            Track Applications
+                            <ClipboardList size={18} />Track Applications
                         </button>
 
                     </div>
@@ -219,7 +219,7 @@ function About() {
                 <button
                     onClick={() => navigate("/career-resources")}
                 >
-                    Explore Career Resources
+                    <BookOpen size={18} />Explore Career Resources
                 </button>
 
             </section>
@@ -240,13 +240,13 @@ function About() {
                 <button
                     onClick={() => navigate("/opportunities")}
                 >
-                    Explore Opportunities
+                    <BriefcaseBusiness size={18} />Explore Opportunities
                 </button>
 
                 <button
                     onClick={() => navigate("/register")}
                 >
-                    Create an Account
+                    <UserPlus size={18} />Create an Account
                 </button>
 
             </section>

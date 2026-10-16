@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-
+import { Trash2, CheckCheck, Check } from "lucide-react";
 const STORAGE_KEY = "coordinatorNotifications";
 
 function readNotifications() {
@@ -90,13 +90,13 @@ function CoordinatorNotifications() {
     return (
         <div className="notifications-page">
             <div className="notifications-container">
-                <h1>Coordinator Notifications</h1>
+                <h1>NOTIFICATIONS</h1>
 
                 <p>
                     Stay updated on applications, opportunities,
                     and placement activities.
                 </p>
-
+<div className="unread-notifications-box">
                 <p>
                     <strong>Unread notifications:</strong>{" "}
                     {unreadCount}
@@ -108,10 +108,10 @@ function CoordinatorNotifications() {
                         className="mark-all-read-button"
                         onClick={markAllAsRead}
                     >
-                        Mark All as Read
+                     <CheckCheck size={18} />     Mark All as Read
                     </button>
                 )}
-
+</div>
                 <div className="notifications-list">
                     {notifications.length === 0 ? (
                         <div className="notification-empty">
@@ -149,7 +149,7 @@ function CoordinatorNotifications() {
                                                 )
                                             }
                                         >
-                                            Mark as Read
+                                           <Check size={18} />   
                                         </button>
                                     )}
 
@@ -161,7 +161,7 @@ function CoordinatorNotifications() {
                                             )
                                         }
                                     >
-                                        Delete
+                                      <Trash2 size={18} />      
                                     </button>
                                 </div>
                             </div>

@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { KeyRound, Save, ChevronLeft } from "lucide-react";
 
 const PROFILE_KEY = "coordinatorSettings";
 const PREFERENCES_KEY = "coordinatorNotificationPreferences";
@@ -153,8 +154,10 @@ function CoordinatorSettings() {
 
     return (
         <div className="coordinator-dashboard-container">
-            <section className="coordinator-welcome">
-                <h1>Coordinator Settings</h1>
+            <div className="coordinator-page-heading">
+                <h1>SETTINGS</h1>
+                </div>
+                <section className="coordinator-welcome">
                 <p>
                     Manage your profile, password and notification
                     preferences.
@@ -163,6 +166,7 @@ function CoordinatorSettings() {
 
             <section className="coordinator-summary">
                 <h2>Profile Settings</h2>
+            <div className="coordinator-settings-section">
 
                 <form
                     className="opportunity-form"
@@ -202,12 +206,14 @@ function CoordinatorSettings() {
                         </label>
                     </div>
 
-                    <button type="submit">Save Profile</button>
+                    <button type="submit"> <Save size={18} />Save Profile</button>
                 </form>
-            </section>
+            </div>
 
-            <section className="coordinator-summary">
+
+            
                 <h2>Password Settings</h2>
+<div className="coordinator-settings-section">
 
                 <form
                     className="opportunity-form"
@@ -253,7 +259,7 @@ function CoordinatorSettings() {
                         </label>
                     </div>
 
-                    <button type="submit">Change Password</button>
+                    <button type="submit">  <KeyRound size={18} />Change Password</button>
                 </form>
 
                 <p>
@@ -261,10 +267,11 @@ function CoordinatorSettings() {
                     This form will not change your login password until
                     it is connected to the authentication system.
                 </p>
-            </section>
+            </div>
 
-            <section className="coordinator-summary">
+            
                 <h2>Notification Preferences</h2>
+<div className="coordinator-settings-section">
 
                 <form
                     className="opportunity-form"
@@ -313,9 +320,11 @@ function CoordinatorSettings() {
                     </div>
 
                     <button type="submit">
-                        Save Notification Preferences
+                     <Save size={18} />     Save Notification Preferences
                     </button>
                 </form>
+                </div >
+
             </section>
 
             <section className="coordinator-back-section">
@@ -323,7 +332,7 @@ function CoordinatorSettings() {
                     type="button"
                     onClick={() => navigate("/coordinator-dashboard")}
                 >
-                    Back to Dashboard
+                  <ChevronLeft size={18} />    Back to Dashboard
                 </button>
             </section>
         </div>

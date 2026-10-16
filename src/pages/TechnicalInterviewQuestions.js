@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-
+import { ChevronLeft} from "lucide-react";
 const TechnicalInterviewQuestions = () => {
   const navigate = useNavigate();
 
@@ -1204,7 +1204,7 @@ const TechnicalInterviewQuestions = () => {
 
 
   const QuestionGroup = ({ title, questions }) => (
-    <div>
+    <div className="technical-question-box">
       <h3>{title}</h3>
       <ul>
         {questions.map((question) => (
@@ -1219,8 +1219,8 @@ const TechnicalInterviewQuestions = () => {
       <div className="resource-detail-container">
        
         <div className="resource-detail-intro">
-          <h1>Technical Interview Questions</h1>
-          <p>
+          <h1>TECHNICAL INTERVIEW QUESTIONS</h1>
+          <p className="technical-intro-description">
             Prepare for technical interviews with questions covering Java,
             HTML, CSS, Bootstrap, JavaScript, React, SQL, Spring Boot,
             REST APIs, computer science fundamentals, and Git.
@@ -1380,7 +1380,7 @@ const TechnicalInterviewQuestions = () => {
           className="back-resource-button"
           onClick={() => navigate("/career-resources")}
         >
-          Back to Career Resources
+         <ChevronLeft size={18} />  Back to Career Resources
         </button>
       </div>
     </div>

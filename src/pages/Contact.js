@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import {Send, Mail, Phone } from "lucide-react";
 function Contact() {
 
     const [name, setName] = useState("");
@@ -67,7 +67,7 @@ function Contact() {
 
         <div className="contact-container">
 
-            <h1>Contact Us</h1>
+            <h1>CONTACT US</h1>
 
             <p className="contact-intro">
                 Have a question or need help? Get in touch with us.
@@ -89,12 +89,12 @@ function Contact() {
                     </p>
 
                     <p>
-                        <strong>Email:</strong>{" "}
+                        <strong><Mail size={18} />:</strong>{" "}
                         support@example.com
                     </p>
 
                     <p>
-                        <strong>Phone:</strong>{" "}
+                        <strong><Phone size={18} />:</strong>{" "}
                         +91 98765 43210
                     </p>
                      <br></br>
@@ -155,7 +155,7 @@ function Contact() {
 
 
                         <button type="submit">
-                            Send Message
+                           <Send size={18} /> Send Message
                         </button>
 
                     </form>

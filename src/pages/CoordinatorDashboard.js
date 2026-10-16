@@ -1,4 +1,10 @@
-
+import CoordinatorNavbar from "../components/CoordinatorNavbar";
+import {
+    Users,
+    BriefcaseBusiness,
+    ClipboardCheck,
+    ChartNoAxesCombined
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -84,35 +90,40 @@ function CoordinatorDashboard() {
     ];
 
     const actions = [
-        {
-            title: "Manage Students",
-            description:
-                "View student information and monitor placement readiness.",
-            button: "View Students",
-            path: "/coordinator/students"
-        },
-        {
-            title: "Manage Opportunities",
-            description:
-                "Add, update and remove job and internship opportunities.",
-            button: "Manage Opportunities",
-            path: "/coordinator/opportunities"
-        },
-        {
-            title: "Track Applications",
-            description:
-                "Review student applications and update their status.",
-            button: "View Applications",
-            path: "/coordinator/applications"
-        },
-        {
-            title: "Placement Reports",
-            description:
-                "Review placement statistics and application progress.",
-            button: "View Reports",
-            path: "/coordinator/reports"
-        }
-    ];
+    {
+        title: "Manage Students",
+        description:
+            "View student information and monitor placement readiness.",
+        button: "View Students",
+        path: "/coordinator/students",
+        icon: Users
+    },
+    {
+        title: "Manage Opportunities",
+        description:
+            "Add, update and remove job and internship opportunities.",
+        button: "Manage Opportunities",
+        path: "/coordinator/opportunities",
+        icon: BriefcaseBusiness
+    },
+    {
+        title: "Track Applications",
+        description:
+            "Review student applications and update their status.",
+        button: "View Applications",
+        path: "/coordinator/applications",
+        icon: ClipboardCheck
+    },
+    {
+        title: "Placement Reports",
+        description:
+            "Review placement statistics and application progress.",
+        button: "View Reports",
+        path: "/coordinator/reports",
+        icon: ChartNoAxesCombined
+    }
+];
+   
 
     const filteredActions = useMemo(() => {
         const query = search.trim().toLowerCase();
@@ -126,101 +137,102 @@ function CoordinatorDashboard() {
         );
     }, [search]);
 
-    return (
-        <div className="coordinator-dashboard-container">
+   
+       
+return (
 
-            <section className="coordinator-welcome">
+
+    <div className="coordinator-dashboard-container">
+
+        <section className="coordinator-welcome">
+            <h1>Welcome, Coordinator! 👋</h1>
+            <p>
+                Manage students, opportunities and placement
+                activities from one place.
+            </p>
+        </section>
+
+        <section className="coordinator-summary">
+            <div className="coordinator-section-heading">
+                <h2>Dashboard Summary</h2>
+                <span className="coordinator-updated">
+                    Updated: {lastUpdated.toLocaleTimeString()}
+                </span>
+            </div>
+
+            <div className="coordinator-stats">
+                {stats.map((stat) => (
+                    <button
+                        type="button"
+                        className="coordinator-stat-card"
+                        key={stat.title}
+                        onClick={() => navigate(stat.path)}
+                        title={`Open ${stat.title}`}
+                    >
+                        <h3>{stat.count}</h3>
+                        <hr />
+                        <p>{stat.title}</p>
+                        <small>{stat.description}</small>
+                    </button>
+                ))}
+            </div>
+        </section>
+
+        <section className="coordinator-summary">
+            <h2 className="coordinator-centered-heading">
+                Placement Snapshot
+            </h2>
+
+            <div className="coordinator-placement-snapshot">
                 <div>
-                    <h1>Welcome, Coordinator! 👋</h1>
-                    <p>
-                        Manage students, opportunities and placement
-                        activities from one place.
-                    </p>
+                    <span>Applications selected / placed</span>
+                    <strong>{selectedApplications.length}</strong>
                 </div>
 
-                
-            </section>
-
-            <section className="coordinator-summary">
-                <div className="coordinator-section-heading">
-                    <div>
-                        <h2>Dashboard Summary</h2>
-                        
-                    </div>
-                    <span className="coordinator-updated">
-                        Updated: {lastUpdated.toLocaleTimeString()}
-                    </span>
+                <div>
+                    <span>Applications awaiting review</span>
+                    <strong>
+                        {
+                            applications.filter((item) =>
+                                ["pending", "applied", ""].includes(
+                                    String(item.status || "").toLowerCase()
+                                )
+                            ).length
+                        }
+                    </strong>
                 </div>
+            </div>
+        </section>
 
-                <div className="coordinator-stats">
-                    {stats.map((stat) => (
+        <section className="coordinator-actions">
+            <h2 className="coordinator-centered-heading">
+                Explore Your Dashboard
+            </h2>
+
+            <div className="coordinator-actions-grid">
+                {filteredActions.map((action) => (
+                    <div
+                        className="coordinator-action-card"
+                        key={action.title}
+                    >
+                        <h3>{action.title}</h3>
+                        <p>{action.description}</p>
+
                         <button
                             type="button"
-                            className="coordinator-stat-card"
-                            key={stat.title}
-                            onClick={() => navigate(stat.path)}
-                            title={`Open ${stat.title}`}
+                            onClick={() => navigate(action.path)}
                         >
-                            <h3>{stat.count}</h3>
-                            <hr />
-                            <p>{stat.title}</p>
-                            <small>{stat.description}</small>
+                          <action.icon size={18} />   {action.button}
                         </button>
-                    ))}
-                </div>
-            </section>
-
-            <section className="coordinator-summary">
-                <h2>Placement Snapshot</h2>
-
-                <div className="coordinator-placement-snapshot">
-                    <div>
-                        <span>Applications selected / placed</span>
-                        <strong>{selectedApplications.length}</strong>
                     </div>
-                    <div>
-                        <span>Applications awaiting review</span>
-                        <strong>
-                            {
-                                applications.filter((item) =>
-                                    ["pending", "applied", ""].includes(
-                                        String(item.status || "")
-                                            .toLowerCase()
-                                    )
-                                ).length
-                            }
-                        </strong>
-                    </div>
-                </div>
-            </section>
+                ))}
+            </div>
+        </section>
 
-            <section className="coordinator-actions">
-                <h2>Explore Your Dashboard</h2>
+    </div>
 
-                <div className="coordinator-actions-grid">
-                    {actions.map((action) => (
-                        <div
-                            className="coordinator-action-card"
-                            key={action.title}
-                        >
-                            <h3>{action.title}</h3>
-                            <hr />
-                            <p>{action.description}</p>
+);
 
-                            <button
-                                type="button"
-                                onClick={() => navigate(action.path)}
-                            >
-                                {action.button} 
-                            </button>
-                        </div>
-                    ))}
-                </div>
-
-                
-            </section>
-        </div>
-    );
 }
 
 export default CoordinatorDashboard;

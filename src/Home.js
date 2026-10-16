@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { Rocket, BriefcaseBusiness, Search, ArrowRight } from "lucide-react";
 function Home() {
 
     const navigate = useNavigate();
@@ -46,13 +46,13 @@ function Home() {
                 <button
                     onClick={() => navigate("/opportunities")}
                 >
-                    Explore Opportunities
+                   <BriefcaseBusiness size={18} /> Explore Opportunities
                 </button>
 
                 <button
                     onClick={() => navigate("/register")}
                 >
-                    Get Started
+                   <Rocket size={18} /> Get Started
                 </button>
 
             </section>
@@ -108,7 +108,7 @@ function Home() {
 
 
                     <button onClick={handleSearch}>
-                        Search
+                        <Search size={18} />Search
                     </button>
 
                 </div>
@@ -138,15 +138,15 @@ function Home() {
                         <h3>Software Developer</h3>
 
                         <p>
-                            Company: Tech Solutions
+                            <b>Company:</b> Tech Solutions
                         </p>
 
                         <p>
-                            Location: Hyderabad
+                            <b>ocation:</b>L Hyderabad
                         </p>
 
                         <p>
-                            Type: Full Time
+                           <b> Type:</b> Full Time
                         </p>
 
                         <button
@@ -175,7 +175,7 @@ function Home() {
                                 })
                             }
                         >
-                            View Details
+                           <ArrowRight size={18} /> View Details
                         </button>
 
                     </div>
@@ -188,15 +188,16 @@ function Home() {
                         <h3>Frontend Developer Intern</h3>
 
                         <p>
-                            Company: Innovate Labs
+                           <b>Company:</b> Innovate Labs
                         </p>
 
                         <p>
-                            Location: Remote
+                            <b>Location:</b> Remote
                         </p>
 
                         <p>
-                            Type: Internship
+                            <b>Type:</b>
+                             Internship
                         </p>
 
                         <button
@@ -225,7 +226,7 @@ function Home() {
                                 })
                             }
                         >
-                            View Details
+                           <ArrowRight size={18} /> View Details
                         </button>
 
                     </div>
@@ -238,15 +239,15 @@ function Home() {
     <h3>Java Full Stack Developer</h3>
 
     <p>
-        Company: TechNova Solutions
+       <b> Company:</b> TechNova Solutions
     </p>
 
     <p>
-        Location: Bangalore
+        <b>Location:</b> Bangalore
     </p>
 
     <p>
-        Type: Full Time
+        <b>Type: </b>Full Time
     </p>
 
     <button
@@ -275,7 +276,7 @@ function Home() {
             })
         }
     >
-        View Details
+       <ArrowRight size={18} /> View Details
     </button>
 
 </div>
@@ -309,7 +310,7 @@ function Home() {
                     })
                 }
             >
-                View Opportunity
+                <ArrowRight size={18} />View Opportunity
             </button>
         </div>
 
@@ -328,7 +329,7 @@ function Home() {
                     })
                 }
             >
-                View Opportunity
+               <ArrowRight size={18} /> View Opportunity
             </button>
         </div>
 
@@ -347,7 +348,7 @@ function Home() {
                     })
                 }
             >
-                View Opportunity
+              <ArrowRight size={18} />  View Opportunity
             </button>
         </div>
 
@@ -366,7 +367,7 @@ function Home() {
                     })
                 }
             >
-                View Opportunity
+                <ArrowRight size={18} />View Opportunity
             </button>
         </div>
 

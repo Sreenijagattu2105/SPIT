@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import {ChevronLeft,  Mail } from "lucide-react";
 function ForgotPassword() {
 
     const navigate = useNavigate();
@@ -27,7 +27,7 @@ function ForgotPassword() {
 return (
     <div className="forgot-password-page">
         <div className="forgot-password-container">
-            <h1>Forgot Password?</h1>
+            <h1>FORGOT PASSWORD ?</h1>
 
             <p>
                 Enter your registered email address to reset your password.
@@ -46,16 +46,16 @@ return (
                     />
 
                     <button type="submit">
-                        Send Reset Instructions
+                        <Mail size={18} /> Send Reset Instructions
                     </button>
                 </form>
             </div>
 
-            <button
+            <button                                  
                 type="button"
                 onClick={() => navigate("/login")}
             >
-                Back to Login
+              <ChevronLeft size={18} />   Back to Login
             </button>
         </div>
     </div>

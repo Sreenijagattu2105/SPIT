@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 import staticOpportunities from "../opportunitiesData";
-
+import {  Share2, ArrowRight, FilterX, Bookmark, House } from "lucide-react";
 
 
 function getCoordinatorOpportunities() {
@@ -156,55 +156,20 @@ function Opportunities() {
 
 
 
-          const handleShare = async opportunity => {
+          
+const handleShare = (opportunity) => {
+    const shareUrl =
+        `${window.location.origin}/opportunity-details?id=${encodeURIComponent(opportunity.id)}`;
 
-                    const shareUrl =
+    const message =
+        `Check out this opportunity at ${opportunity.company}: ${opportunity.title}\n\n${shareUrl}`;
 
-                              `${window.location.origin}/opportunity-details?id=${encodeURIComponent(opportunity.id)}`;
+    const whatsappUrl =
+        `https://wa.me/?text=${encodeURIComponent(message)}`;
 
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+};
 
-
-                    const shareData = {
-
-                              title: `${opportunity.company} - ${opportunity.title}`,
-
-                              text: `Check out this opportunity at ${opportunity.company}: ${opportunity.title}`,
-
-                              url: shareUrl
-
-                    };
-
-
-
-                    try {
-
-                              if (navigator.share) {
-
-                                        await navigator.share(shareData);
-
-                              } else {
-
-                                        await navigator.clipboard.writeText(
-
-                                                  `${shareData.text}\n${shareData.url}`
-
-                                        );
-
-                                        alert("Opportunity link copied. You can share it with anyone.");
-
-                              }
-
-                    } catch (error) {
-
-                              if (error.name !== "AbortError") {
-
-                                        alert("Unable to share the opportunity.");
-
-                              }
-
-                    }
-
-          };
 
 
 
@@ -422,7 +387,7 @@ function Opportunities() {
 
                                         <>
 
-                                                  <h1>All Opportunities</h1>
+                                                  <h1>OPPORTUNITIES</h1>
 
 
 
@@ -484,7 +449,7 @@ function Opportunities() {
 
 
 
-                                                            <button onClick={clearFilters}>Clear Filters</button>
+                                                            <button onClick={clearFilters}><FilterX size={18} />Clear Filters</button>
 
                                                   </div>
 
@@ -502,14 +467,10 @@ function Opportunities() {
 
                                                             <div className="opportunity-card" key={opportunity.id}>
 
-                                                                      <h3>{opportunity.company}</h3>
+                                                                      <h2>{opportunity.company}</h2>
 
                                                                       <h2>{opportunity.title}</h2>
-
-
-
                                                                       <p><strong>Location:</strong> {opportunity.location || "Not specified"}</p>
-
                                                                       <p><strong>Type:</strong> {opportunity.type || "Not specified"}</p>
                             <p>
                                 <strong>Salary / Stipend:</strong>{" "}
@@ -531,7 +492,7 @@ function Opportunities() {
                                                                       <p><strong>Deadline:</strong> {opportunity.deadline || "Not specified"}</p>
 
 
-
+<div className="opportunity-actions">
                                                                       <button onClick={() =>
 
                                                                                 navigate("/opportunity-details", {
@@ -548,17 +509,15 @@ function Opportunities() {
 
                                                                       }>
 
-                                                                                View Details
+                                                                                <ArrowRight size={18} />View Details
 
                                                                       </button>
-
-
-
-                                                                      <button onClick={() => handleShare(opportunity)}>
-
-                                                                                Share
-
-                                                                      </button>
+                                                                     <button
+    className="share-opportunity-button"
+    onClick={() => handleShare(opportunity)}
+>
+    <Share2 size={18} /> Share
+</button>
 
 
 
@@ -566,11 +525,12 @@ function Opportunities() {
 
                                                                                 localStorage.getItem("userRole") === "student" && (
 
-                                                                                          <button onClick={() => handleSave(opportunity)}>
-
-                                                                                                    Save Opportunity
-
-                                                                                          </button>
+                                                                                          <button
+    className="save-opportunity-button"
+    onClick={() => handleSave(opportunity)}
+>
+    <Bookmark size={18} /> Save Opportunity
+</button>
 
                                                                                 )}
 
@@ -580,12 +540,12 @@ function Opportunities() {
 
                                                                                 <button onClick={() => navigate("/")}>
 
-                                                                                          Back to Home
+                                                                                          <House size={18} />Back to Home
 
                                                                                 </button>
 
                                                                       )}
-
+</div>
                                                             </div>
 
                                                   ))

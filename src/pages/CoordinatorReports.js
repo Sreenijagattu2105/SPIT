@@ -1,5 +1,5 @@
 
-
+import { RefreshCw, Download,  ChevronLeft } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
@@ -383,11 +383,12 @@ function CoordinatorReports() {
 
 
 
-                              <section className="coordinator-welcome">
+                              
+                                        <div className="coordinator-page-heading">
 
-                                        <div>
-
-                                                  <h1>Placement Reports</h1>
+                                                  <h1>PLACEMENT REPORTS</h1>
+    </div>
+    <section className="coordinator-welcome">
 
                                                   <p>
 
@@ -397,7 +398,7 @@ function CoordinatorReports() {
 
                                                   </p>
 
-                                        </div>
+                                    
 
                               </section>
 
@@ -701,10 +702,10 @@ function CoordinatorReports() {
 
                                         <div className="report-actions">
                     <button type="button" onClick={refreshReport}>
-                      Refresh Report
+                    <RefreshCw size={18} />  Refresh Report
                     </button>
                     <button type="button" onClick={exportCSV}>
-                      Export Report to CSV
+                      <Download size={18} /> Export Report to CSV
                     </button>
                   </div>
 
@@ -824,7 +825,7 @@ function CoordinatorReports() {
 
                                         >
 
-                                                  Back to Dashboard
+                                                  <ChevronLeft size={18} /> Back to Dashboard
 
                                         </button>
 

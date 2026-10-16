@@ -1,4 +1,4 @@
-
+import {ChevronLeft, Eye, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -162,14 +162,16 @@ function CoordinatorStudents() {
     return (
         <div className="coordinator-dashboard-container">
 
-            <section className="coordinator-welcome">
-                <div>
-                    <h1>Manage Students</h1>
+         
+                <div className="coordinator-page-heading">
+                    <h1>MANAGE STUDENTS</h1>
+                     </div>
+                     <section className="coordinator-welcome">
                     <p>
                         View, search and manage registered students
                         and job seekers in the SPIT tracker.
                     </p>
-                </div>
+               
             </section>
 
             <section className="coordinator-summary">
@@ -270,7 +272,7 @@ function CoordinatorStudents() {
                                                         setSelectedStudent(student)
                                                     }
                                                 >
-                                                    View Profile
+                                                  <Eye size={18} />   View Profile
                                                 </button>
 
                                                 {" "}
@@ -281,7 +283,7 @@ function CoordinatorStudents() {
                                                         handleDelete(student)
                                                     }
                                                 >
-                                                    Delete
+                                                 <Trash2 size={18} />   
                                                 </button>
                                             </td>
                                         </tr>
@@ -343,7 +345,7 @@ function CoordinatorStudents() {
                                 onClick={() => setSelectedStudent(null)}
                                 aria-label="Close student profile"
                             >
-                                Close
+                             <X size={18} /> 
                             </button>
                         </div>
 
@@ -444,10 +446,14 @@ function CoordinatorStudents() {
                         navigate("/coordinator-dashboard")
                     }
                 >
-                    Back to Dashboard
-                </button>
+                <button
+    type="button"
+    onClick={() => navigate("/coordinator-dashboard")}
+>
+    <ChevronLeft size={18} />
+  Back to Dashboard
+                </button></button>
             </section>
-
         </div>
     );
 }

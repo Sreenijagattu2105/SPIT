@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-
+import {ArrowRight } from "lucide-react";
 function CareerResources() {
 
     const navigate = useNavigate();
@@ -72,14 +72,14 @@ function CareerResources() {
 
         <div className="career-resources-container">
 
-            <h1>Career Resources</h1>
+            <h1>CAREER RESOURCES</h1>
 
             <p className="career-resources-intro">
                 Explore career preparation resources focused on
                 Full Stack Development and software development roles.
             </p>
 
-
+    
             <div className="resources-grid">
 
                 {resources.map((resource, index) => (
@@ -101,7 +101,7 @@ function CareerResources() {
                         <button
                             onClick={() => handleView(resource)}
                         >
-                            View
+                            <ArrowRight size={18} />View
                         </button>
 
                     </div>

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-
+import { Eye, Trash2 } from "lucide-react";
 function Resume() {
     const [resumeName, setResumeName] = useState("");
     const [resumeUrl, setResumeUrl] = useState("");
@@ -37,7 +37,7 @@ function Resume() {
     return (
         <div className="resume-container">
             <div className="resume-card">
-                <h1>My Resume</h1>
+                <h1>MY RESUME</h1>
 
                 <p className="resume-intro">
                     Upload and manage your resume for internship
@@ -73,14 +73,14 @@ function Resume() {
                                         )
                                     }
                                 >
-                                    View Resume
+                                <Eye size={18} />     View Resume
                                 </button>
 
                                 <button
                                     type="button"
                                     onClick={removeResume}
                                 >
-                                    Remove Resume
+                                 <Trash2 size={18} />  
                                 </button>
                             </div>
                         </div>

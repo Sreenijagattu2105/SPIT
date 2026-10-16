@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -17,8 +16,6 @@ import StudentDashboard from "./pages/StudentDashboard";
 import MyApplications from "./pages/MyApplications";
 import SavedOpportunities from "./pages/SavedOpportunities";
 import Students from "./pages/Students";
-import Placements from "./pages/Placements";
-import Internships from "./pages/Internships";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import ResumeTips from "./pages/ResumeTips";
@@ -37,6 +34,8 @@ import CoordinatorReports from "./pages/CoordinatorReports";
 import CoordinatorSettings from "./pages/CoordinatorSettings";
 import CoordinatorNotifications from "./pages/CoordinatorNotifications";
 import InterviewProgress from "./pages/InterviewProgress";
+import StudentIconNavbar from "./components/StudentIconNavbar";
+import CoordinatorNavbar from "./components/CoordinatorNavbar";
 
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(
@@ -57,21 +56,23 @@ function App() {
 
         window.addEventListener("authChange", handleAuthChange);
 
-        return () => {
-            window.removeEventListener("authChange", handleAuthChange);
-        };
+        return () => { window.removeEventListener("authChange", handleAuthChange); };
     }, []);
 
-    const showSidebar =
-        isLoggedIn &&
-        (userRole === "student" || userRole === "coordinator");
+    const showSidebar = isLoggedIn && (userRole === "student" || userRole === "coordinator");
 
     return (
         <BrowserRouter>
             <ScrollToTop />
 
             <div className={showSidebar ? "app-with-sidebar" : "app-with-top-navbar"}>
-                <Navbar />
+                {showSidebar && userRole === "student" ? (
+    <StudentIconNavbar />
+) : showSidebar && userRole === "coordinator" ? (
+    <CoordinatorNavbar />
+) : (
+    <Navbar />
+)}
 
                 <main className={showSidebar ? "app-main-content" : "app-public-content"}>
                     <Routes>
@@ -87,7 +88,14 @@ function App() {
 
                         {/* PUBLIC PAGES */}
                         <Route path="/about" element={<About />} />
-                        <Route path="/opportunities" element={<Opportunities />} />
+                        
+
+<Route
+    path="/opportunities"
+    element={<Opportunities />}
+/>
+
+
                         <Route
                             path="/opportunity-details"
                             element={<OpportunityDetails />}
@@ -122,8 +130,7 @@ function App() {
                             element={<SavedOpportunities />}
                         />
                         <Route path="/students" element={<Students />} />
-                        <Route path="/placements" element={<Placements />} />
-                        <Route path="/internships" element={<Internships />} />
+                        
                         <Route path="/notifications" element={<Notifications />} />
 
                         {/* CAREER RESOURCES */}
@@ -173,6 +180,9 @@ function App() {
                         />
 
                         {/* COORDINATOR PAGES */}
+
+
+     
                         <Route
                             path="/coordinator-dashboard"
                             element={

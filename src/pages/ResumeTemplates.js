@@ -1,6 +1,6 @@
 
 import { Navigate, useNavigate } from "react-router-dom";
-
+import { ChevronLeft} from "lucide-react";
 function ResumeTemplates() {
     const navigate = useNavigate();
 
@@ -16,7 +16,7 @@ function ResumeTemplates() {
         <div className="resource-detail-page">
             <div className="resource-detail-container">
 
-                <h1>Resume Templates</h1>
+                <h1>RESUME TEMPLATES</h1>
 
                 <p className="resource-detail-intro">
                     Choose a resume format based on your experience
@@ -36,7 +36,7 @@ function ResumeTemplates() {
                     </p>
 
                     <div className="resume-template-box">
-
+<div className="resume-contact-info">
                         <h3>YOUR NAME</h3>
 
                         <p>
@@ -64,7 +64,7 @@ function ResumeTemplates() {
                                 GitHub Profile
                             </a>
                         </p>
-
+</div>
                         <hr />
 
                         <h4>CAREER OBJECTIVE</h4>
@@ -217,7 +217,7 @@ function ResumeTemplates() {
                     </p>
 
                     <div className="resume-template-box">
-
+<div className="resume-contact-info">
                         <h3>YOUR NAME</h3>
 
                         <p>
@@ -245,7 +245,7 @@ function ResumeTemplates() {
                                 GitHub Profile
                             </a>
                         </p>
-
+</div>
                         <hr />
 
                         <h4>PROFESSIONAL SUMMARY</h4>
@@ -394,7 +394,7 @@ function ResumeTemplates() {
                 <div className="resource-section">
 
                     <h2>How to Choose a Template</h2>
-
+<br></br>
                     <ul>
                         <li>
                             Choose Template 1 for a general fresher resume
@@ -443,7 +443,7 @@ function ResumeTemplates() {
                     className="back-resource-button"
                     onClick={() => navigate("/career-resources")}
                 >
-                    Back to Career Resources
+                  <ChevronLeft size={18} />   Back to Career Resources
                 </button>
 
             </div>

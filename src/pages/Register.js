@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { UserPlus, LogIn } from "lucide-react";
+import Login from "./Login";
 function addCoordinatorNotification(notification) {
     try {
         const stored = JSON.parse(
@@ -166,7 +167,7 @@ function Register() {
 return (
     <div className="register-page">
         <div className="register-container">
-            <h1>Registration</h1>
+            <h1>REGISTRATION</h1>
 
             <p>
                 Create your SPIT account to explore internships
@@ -220,7 +221,7 @@ return (
                         required
                     />
 
-                    <button type="submit">Register</button>
+                    <button type="submit"> <UserPlus size={18} /> Register</button>
                 </form>
             </div>
 
@@ -230,7 +231,7 @@ return (
                     type="button"
                     onClick={() => navigate("/login")}
                 >
-                    Login
+                  <LogIn size={18} />    Login
                 </button>
             </p>
         </div>

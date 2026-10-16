@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { ExternalLink, Trash2 } from "lucide-react";
 const STORAGE_KEY = "startedApplications";
 
 const STATUSES = [
@@ -134,7 +134,7 @@ function MyApplications() {
 
     return (
         <div className="my-applications-container">
-            <h1>My Applications</h1>
+            <h1>MY APPLICATIONS</h1>
 
             <p>
                 Track your applications and update their current status.
@@ -214,27 +214,32 @@ function MyApplications() {
                                 </select>
                             </label>
 
-                            {application.companyWebsite && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        window.open(
-                                            application.companyWebsite,
-                                            "_blank",
-                                            "noopener,noreferrer"
-                                        )
-                                    }
-                                >
-                                    Visit Company Website
-                                </button>
-                            )}
+<div className="application-card-actions">
+    {application.companyWebsite && (
+        <button
+            type="button"
+            onClick={() =>
+                window.open(
+                    application.companyWebsite,
+                    "_blank",
+                    "noopener,noreferrer"
+                )
+            }
+        >
+            <ExternalLink size={18} />
+            Visit Company Website
+        </button>
+    )}
 
-                            <button
-                                type="button"
-                                onClick={() => handleRemove(index)}
-                            >
-                                Remove Application
-                            </button>
+    <button
+        type="button"
+        onClick={() => handleRemove(index)}
+    >
+        <Trash2 size={18} />
+        
+    </button>
+</div>
+
                         </div>
                     ))}
                 </div>

@@ -1,4 +1,4 @@
-
+import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 function SavedOpportunities() {
@@ -202,7 +202,7 @@ function SavedOpportunities() {
 
   return (
     <div className="container mt-4 saved-opportunities-page">
-      <h2 className="mb-4">Saved Opportunities</h2>
+      <h1 className="mb-4">SAVED OPPORTUNITIES</h1>
 
 
 <p className="saved-opportunities-subtitle">
@@ -222,7 +222,7 @@ function SavedOpportunities() {
             >
               <div className="card h-100 shadow-sm">
                 <div className="card-body">
-                  <h5 className="card-title">{opportunity.title}</h5>
+                  <h2 className="card-title">{opportunity.title}</h2>
 
                   <p className="card-text">
                     <strong>Company:</strong> {opportunity.company}
@@ -247,7 +247,7 @@ function SavedOpportunities() {
                     className="btn btn-danger"
                     onClick={() => handleRemove(opportunity)}
                   >
-                    Remove
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-
+import {ChevronLeft} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -83,14 +83,16 @@ function CoordinatorApplications() {
 
     return (
         <div className="coordinator-dashboard-container">
-            <section className="coordinator-welcome">
-                <div>
-                    <h1>Track Applications</h1>
+            
+                <div className="coordinator-page-heading">
+                    <h1>TRACK APPLICATIONS</h1>
+                    </div>
+                    <section className="coordinator-welcome">
                     <p>
                         Monitor student applications and view the latest
                         status reported by each student.
                     </p>
-                </div>
+                
             </section>
 
             <section className="coordinator-summary">
@@ -241,7 +243,7 @@ function CoordinatorApplications() {
                     type="button"
                     onClick={() => navigate("/coordinator-dashboard")}
                 >
-                    Back to Dashboard
+                   <ChevronLeft size={18} />  Back to Dashboard
                 </button>
             </section>
         </div>

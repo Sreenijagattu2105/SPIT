@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -12,11 +11,16 @@ import {
     Bell,
     Settings as SettingsIcon,
     LayoutDashboard,
+    LogOut
 } from "lucide-react";
 
 function StudentDashboard() {
     const navigate = useNavigate();
-
+const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("userRole");
+    navigate("/login");
+};
     const user =
         JSON.parse(localStorage.getItem("registeredUser")) || {};
 
@@ -95,7 +99,7 @@ function StudentDashboard() {
             {/* SECTION 1: Dashboard Summary */}
             <section className="dashboard-summary-section">
                 <h2 className="dashboard-section-title">
-                    <LayoutDashboard size={25} className="dashboard-heading-icon" />
+                  
                     Dashboard Summary
                 </h2>
 
@@ -130,7 +134,7 @@ function StudentDashboard() {
             {/* SECTION 2: Dashboard Cards */}
             <section className="dashboard-main-section">
                 <h2 className="dashboard-section-title">
-                    <LayoutDashboard size={25} className="dashboard-heading-icon" />
+                    
                     Explore Your Dashboard
                 </h2>
 

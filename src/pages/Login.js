@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { UserPlus, LogIn, KeyRound } from "lucide-react";
 function Login() {
     const navigate = useNavigate();
 
@@ -127,7 +127,7 @@ function Login() {
 return (
     <div className="login-page">
         <div className="login-container">
-            <h1>Login</h1>
+            <h1>LOGIN</h1>
 
             <p>Login to access your SPIT account.</p>
 
@@ -162,16 +162,16 @@ return (
                         required
                     />
 
-                    <button type="submit">Login</button>
+                    <button type="submit"> <LogIn size={18} />Login</button>
                 </form>
             </div>
 
-            <p>
+            <p className="forgot-password-link">
                 <button
                     type="button"
                     onClick={() => navigate("/forgot-password")}
                 >
-                    Forgot Password?
+                    <KeyRound size={18} /> Forgot Password ?
                 </button>
             </p>
 
@@ -181,7 +181,7 @@ return (
                     type="button"
                     onClick={() => navigate("/register")}
                 >
-                    Register
+                    <UserPlus size={18} /> Register
                 </button>
             </p>
         </div>

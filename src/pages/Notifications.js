@@ -1,7 +1,33 @@
 import { useState, useEffect } from "react";
-
+import { Trash2, CheckCheck, Check } from "lucide-react";
 function Notifications() {
+const [unreadCount, setUnreadCount] = useState(0);
 
+useEffect(() => {
+    const updateUnreadCount = () => {
+        try {
+            const notifications = JSON.parse(
+                localStorage.getItem("notifications") || "[]"
+            );
+
+            setUnreadCount(
+                notifications.filter(notification => !notification.read).length
+            );
+        } catch {
+            setUnreadCount(0);
+        }
+    };
+
+    updateUnreadCount();
+
+    window.addEventListener("notificationsChange", updateUnreadCount);
+    window.addEventListener("storage", updateUnreadCount);
+
+    return () => {
+        window.removeEventListener("notificationsChange", updateUnreadCount);
+        window.removeEventListener("storage", updateUnreadCount);
+    };
+}, []);
     const [notifications, setNotifications] = useState(
         JSON.parse(localStorage.getItem("notifications")) || [
             {
@@ -79,24 +105,31 @@ const handleDelete = (id) => {
 
             <div className="notifications-container">
 
-                <h1>Notifications</h1>
+                <h1>NOTIFICATIONS</h1>
 
-                <p>
-                    View updates about opportunities and your applications.
-                </p>
 
-                {notifications.some(
-                    (notification) => !notification.read
-                ) && (
+{/* Description box */}
+<div className="notifications-description-box">
+    <p>
+        View updates about opportunities and your applications.
+    </p>
+</div>
 
-                    <button
-                        className="mark-all-read-button"
-                        onClick={markAllAsRead}
-                    >
-                        Mark All as Read
-                    </button>
+{/* Unread notifications box */}
+<div className="student-unread-notifications">
+    <strong>Unread notifications: {unreadCount}</strong>
 
-                )}
+    {unreadCount > 0 && (
+        <button
+            type="button"
+            className="mark-all-read-button"
+            onClick={markAllAsRead}
+        >
+          <CheckCheck size={18} />    Mark All as Read
+        </button>
+    )}
+</div>
+
 
                 <div className="notifications-list">
 
@@ -147,7 +180,7 @@ const handleDelete = (id) => {
                 markAsRead(notification.id)
             }
         >
-            Mark as Read
+            <Check size={18} /> 
         </button>
 
     )}
@@ -157,7 +190,7 @@ const handleDelete = (id) => {
             handleDelete(notification.id)
         }
     >
-        Delete
+     <Trash2 size={18} />  
     </button>
 
 </div>

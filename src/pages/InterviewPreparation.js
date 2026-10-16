@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from "react-router-dom";
-
+import { ChevronLeft} from "lucide-react";
 function InterviewPreparation() {
 
     const navigate = useNavigate();
@@ -17,7 +17,7 @@ function InterviewPreparation() {
 
             <div className="resource-detail-container">
 
-                <h1>Interview Preparation</h1>
+                <h1>INTERVIEW PREPARATION</h1>
 
                 <p className="resource-detail-intro">
                     Prepare for Full Stack Development and software
@@ -26,7 +26,7 @@ function InterviewPreparation() {
                     and behavioral interview guidance.
                 </p>
 
-
+<div className="resource-tips-content">
                 {/* 1. Before the Interview */}
 
                 <div className="resource-section">
@@ -539,14 +539,14 @@ function InterviewPreparation() {
 
                 </div>
 
-
+</div>
                 {/* Back Button */}
 
                 <button
                     className="back-resource-button"
                     onClick={() => navigate("/career-resources")}
                 >
-                    Back to Career Resources
+                 <ChevronLeft size={18} />    Back to Career Resources
                 </button>
 
             </div>

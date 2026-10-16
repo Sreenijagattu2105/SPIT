@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from "react-router-dom";
-
+import { ChevronLeft} from "lucide-react";
 function HRInterviewQuestions() {
     const navigate = useNavigate();
 
@@ -14,7 +14,8 @@ function HRInterviewQuestions() {
     return (
         <div className="resource-detail-page">
             <div className="resource-detail-container">
-                <h1>HR Interview Questions</h1>
+                <div className="hr-questions-wrapper">
+                <h1>HR INTERVIEW QUESTIONS</h1>
 
                 <p className="resource-detail-intro">
                     Practice commonly asked HR and behavioral interview
@@ -23,13 +24,14 @@ function HRInterviewQuestions() {
 
                 {/* 1. Tell Me About Yourself */}
                 <div className="resource-section">
+                    <div className="resource-example">
                     <h2>1. Tell Me About Yourself</h2>
                     <p>
                         Prepare a short introduction covering your education,
                         technical skills, projects and career interests.
                     </p>
 
-                    <div className="resource-example">
+                    
                         <strong>Sample Answer 1 – Student:</strong>
                         <p>
                             I am a Computer Science and Engineering student
@@ -64,10 +66,11 @@ function HRInterviewQuestions() {
                             <li>Career interest</li>
                         </ul>
                     </div>
-                </div>
+     
 
                 {/* 2. Strengths */}
-                <div className="resource-section">
+          
+                    <div className="resource-example">
                     <h2>2. What Are Your Strengths?</h2>
                     <p>
                         Mention strengths relevant to the workplace, such as
@@ -75,7 +78,7 @@ function HRInterviewQuestions() {
                         to learn or time management.
                     </p>
 
-                    <div className="resource-example">
+                
                         <strong>Sample Answer 1:</strong>
                         <p>
                             I am analytical and detail-oriented, which helps
@@ -97,18 +100,20 @@ function HRInterviewQuestions() {
                             <strong>Tip:</strong> Support your strengths with
                             a genuine example whenever possible.
                         </p>
-                    </div>
-                </div>
+                        </div>
+        
+             
 
                 {/* 3. Weaknesses */}
-                <div className="resource-section">
+          
+                    <div className="resource-example">
                     <h2>3. What Are Your Weaknesses?</h2>
                     <p>
                         Mention a genuine area you are working to improve and
                         explain the steps you are taking.
                     </p>
 
-                    <div className="resource-example">
+                 
                         <strong>Sample Answer 1:</strong>
                         <p>
                             I sometimes focus too much on small details because
@@ -126,17 +131,18 @@ function HRInterviewQuestions() {
                             are helping me become more confident.
                         </p>
                     </div>
-                </div>
+ 
 
                 {/* 4. Why Should We Hire You */}
-                <div className="resource-section">
+             
+                    <div className="resource-example">
                     <h2>4. Why Should We Hire You?</h2>
                     <p>
                         Explain how your technical skills, adaptability,
                         projects and willingness to learn match the role.
                     </p>
 
-                    <div className="resource-example">
+                
                         <strong>Sample Answer 1:</strong>
                         <p>
                             I bring a strong foundation in software development,
@@ -155,10 +161,11 @@ function HRInterviewQuestions() {
                             contribute to the work.
                         </p>
                     </div>
-                </div>
+
 
                 {/* 5. Why This Company */}
-                <div className="resource-section">
+
+                    <div className="resource-example">
                     <h2>5. Why Do You Want to Join Our Company?</h2>
                     <p>
                         Research the company before the interview. Explain
@@ -166,7 +173,7 @@ function HRInterviewQuestions() {
                         the position.
                     </p>
 
-                    <div className="resource-example">
+                  
                         <strong>Sample Answer:</strong>
                         <p>
                             Your company has a strong reputation for innovation
@@ -188,10 +195,10 @@ function HRInterviewQuestions() {
                             researching the company.
                         </p>
                     </div>
-                </div>
-
+  
                 {/* 6. Five-Year Goal */}
-                <div className="resource-section">
+          
+                    <div className="resource-example">
                     <h2>6. Where Do You See Yourself in Five Years?</h2>
                     <p>
                         Discuss your professional development goals and
@@ -199,7 +206,7 @@ function HRInterviewQuestions() {
                         responsibilities.
                     </p>
 
-                    <div className="resource-example">
+                 
                         <strong>Sample Answer:</strong>
                         <p>
                             In the next five years, I plan to strengthen my
@@ -209,17 +216,16 @@ function HRInterviewQuestions() {
                             I gain experience and continue improving my skills.
                         </p>
                     </div>
-                </div>
-
                 {/* 7. Motivation */}
-                <div className="resource-section">
+         
+                    <div className="resource-example">
                     <h2>7. What Motivates You?</h2>
                     <p>
                         Explain what encourages you to work consistently and
                         achieve your goals.
                     </p>
 
-                    <div className="resource-example">
+               
                         <strong>Sample Answer 1:</strong>
                         <p>
                             What motivates me is the desire to be better than
@@ -236,11 +242,12 @@ function HRInterviewQuestions() {
                             toward clear milestones in a project also motivates
                             me.
                         </p>
-                    </div>
-                </div>
 
+   
+</div>
                 {/* 8. Career Choice */}
-                <div className="resource-section">
+           
+                    <div className="resource-example">
                     <h2>8. Why Did You Choose This Career?</h2>
                     <p>
                         Explain your interest in software development and how
@@ -248,7 +255,7 @@ function HRInterviewQuestions() {
                         your career choice.
                     </p>
 
-                    <div className="resource-example">
+                
                         <strong>Sample Answer:</strong>
                         <p>
                             I have always been interested in technology and
@@ -259,10 +266,11 @@ function HRInterviewQuestions() {
                             want to use these skills to develop useful solutions.
                         </p>
                     </div>
-                </div>
+
 
                 {/* 9. Good Fit */}
-                <div className="resource-section">
+           
+                    <div className="resource-example">
                     <h2>9. Why Are You a Good Fit for This Job?</h2>
                     <p>
                         Connect your technical skills, adaptability, project
@@ -270,7 +278,7 @@ function HRInterviewQuestions() {
                         the position.
                     </p>
 
-                    <div className="resource-example">
+            
                         <strong>Sample Answer:</strong>
                         <p>
                             My technical skills, adaptability and proactive
@@ -280,10 +288,12 @@ function HRInterviewQuestions() {
                             learned and contribute meaningfully to the team.
                         </p>
                     </div>
-                </div>
+               
+   
 
                 {/* 10. Teamwork */}
-                <div className="resource-section">
+            
+                    <div className="resource-example">
                     <h2>10. Tell Me About a Time You Worked in a Team</h2>
                     <p>
                         Interviewers use this question to understand your
@@ -293,7 +303,7 @@ function HRInterviewQuestions() {
                         presentations can be used as examples.
                     </p>
 
-                    <div className="resource-example">
+            
                         <strong>Use the STAR Method:</strong>
                         <ul>
                             <li>
@@ -347,18 +357,19 @@ function HRInterviewQuestions() {
                             <strong>Note:</strong> Replace this example with
                             a real project or team experience of your own.
                         </p>
-                    </div>
-                </div>
+      </div>
+               
 
                 {/* 11. Deadlines */}
-                <div className="resource-section">
+       
+                    <div className="resource-example">
                     <h2>11. How Do You Manage Deadlines?</h2>
                     <p>
                         Explain how you prioritize tasks and manage your time
                         when several activities have deadlines.
                     </p>
 
-                    <div className="resource-example">
+                    
                         <strong>Sample Answer:</strong>
                         <p>
                             I manage deadlines by creating a detailed schedule
@@ -370,10 +381,10 @@ function HRInterviewQuestions() {
                             time.
                         </p>
                     </div>
-                </div>
-
+       
                 {/* 12. Challenge */}
-                <div className="resource-section">
+           
+                    <div className="resource-example">
                     <h2>12. Tell Me About a Challenge You Faced</h2>
                     <p>
                         Choose a real challenge from a project, academic
@@ -381,7 +392,7 @@ function HRInterviewQuestions() {
                         you solved it.
                     </p>
 
-                    <div className="resource-example">
+               
                         <strong>Sample Answer:</strong>
                         <p>
                             During an academic project, our application was
@@ -404,17 +415,18 @@ function HRInterviewQuestions() {
                             <li>Resolving a team disagreement</li>
                         </ul>
                     </div>
-                </div>
+
 
                 {/* 13. Industry Trends */}
-                <div className="resource-section">
+           
+                    <div className="resource-example">
                     <h2>13. How Do You Stay Updated With Industry Trends?</h2>
                     <p>
                         Explain how you continue learning after completing
                         your academic studies.
                     </p>
 
-                    <div className="resource-example">
+                
                         <strong>Sample Answer:</strong>
                         <p>
                             I try to stay updated with industry trends by
@@ -444,17 +456,17 @@ function HRInterviewQuestions() {
                             <li>Small projects and assignments</li>
                         </ul>
                     </div>
-                </div>
+      
 
                 {/* 14. Mistake */}
-                <div className="resource-section">
+            
+                    <div className="resource-example">
                     <h2>14. Tell Me About a Mistake You Made</h2>
                     <p>
                         Choose a genuine mistake and focus on what you learned
                         and how you changed your approach afterwards.
                     </p>
 
-                    <div className="resource-example">
                         <strong>Sample Answer – STAR Method:</strong>
 
                         <p>
@@ -488,17 +500,18 @@ function HRInterviewQuestions() {
                             your own experience and explain what you learned.
                         </p>
                     </div>
-                </div>
+           
 
                 {/* 15. Toughest Decision */}
-                <div className="resource-section">
+       
+                    <div className="resource-example">
                     <h2>15. What Was the Toughest Decision You Made?</h2>
                     <p>
                         Explain the situation, the options you considered and
                         the factors you used to make your decision.
                     </p>
 
-                    <div className="resource-example">
+                 
                         <strong>Sample Answer:</strong>
                         <p>
                             One of the toughest decisions I faced was choosing
@@ -514,10 +527,11 @@ function HRInterviewQuestions() {
                             explain the options and why you selected one.
                         </p>
                     </div>
-                </div>
+ 
 
                 {/* 16. Hobbies */}
-                <div className="resource-section">
+        
+                    <div className="resource-example">
                     <h2>16. Tell Us About Your Hobbies and Interests</h2>
                     <p>
                         Mention genuine hobbies and explain them naturally.
@@ -525,7 +539,7 @@ function HRInterviewQuestions() {
                         during the interview.
                     </p>
 
-                    <div className="resource-example">
+              
                         <strong>Sample Answer:</strong>
                         <p>
                             I enjoy creative activities and learning new
@@ -540,17 +554,18 @@ function HRInterviewQuestions() {
                             hobbies and interests.
                         </p>
                     </div>
-                </div>
+
 
                 {/* 17. Relocation */}
-                <div className="resource-section">
+           
+                    <div className="resource-example">
                     <h2>17. Are You Willing to Relocate?</h2>
                     <p>
                         Answer honestly based on your personal circumstances
                         and the requirements of the position.
                     </p>
 
-                    <div className="resource-example">
+                   
                         <strong>Example if you are willing to relocate:</strong>
                         <p>
                             Yes, I am open to relocating for the right
@@ -564,11 +579,12 @@ function HRInterviewQuestions() {
                             location considerations, and I would appreciate
                             discussing the available options.
                         </p>
-                    </div>
-                </div>
+                   
+     </div>
 
                 {/* 18. Questions for Interviewer */}
-                <div className="resource-section">
+            
+                    <div className="resource-example">
                     <h2>18. Do You Have Any Questions for Us?</h2>
                     <p>
                         Prepare professional questions about the role, team,
@@ -576,7 +592,7 @@ function HRInterviewQuestions() {
                         process.
                     </p>
 
-                    <div className="resource-example">
+                
                         <strong>Questions you can ask:</strong>
                         <ul>
                             <li>
@@ -593,9 +609,9 @@ function HRInterviewQuestions() {
                                 process?
                             </li>
                         </ul>
-                    </div>
                 </div>
-
+              </div>
+</div>
                 {/* Behavioral Interview Preparation */}
                 <div className="resource-section">
                     <h2>Behavioral Interview Preparation</h2>
@@ -906,11 +922,13 @@ function HRInterviewQuestions() {
                     className="back-resource-button"
                     onClick={() => navigate("/career-resources")}
                 >
-                    Back to Career Resources
+                 <ChevronLeft size={18} />    Back to Career Resources
                 </button>
             </div>
+            
         </div>
     );
 }
+
 
 export default HRInterviewQuestions;

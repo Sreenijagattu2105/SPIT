@@ -7,7 +7,9 @@ import {
     useSearchParams
 
 } from "react-router-dom";
-
+import {GraduationCap, ChevronLeft, ExternalLink,
+    CheckCircle,
+    Check } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 import opportunities from "../opportunitiesData";
@@ -290,7 +292,7 @@ function OpportunityDetails() {
 
                 <button onClick={() => navigate("/opportunities")}>
 
-                    Back to Opportunities
+                    <ChevronLeft size={18} /> Back to Opportunities
 
                 </button>
 
@@ -584,37 +586,22 @@ const newApplication = {
     return (
 
         <div className="opportunity-details-container">
-
+               
             {!isStudent && (
-
                 <div className="login-application-message">
-
-                    <h3>Want to apply for this opportunity?</h3>
-
+                    <h1>Want to apply for this opportunity?</h1>
                     <p>
-
-                        Please log in as a student to apply for this
-
-                        opportunity and track your application.
-
+                        Please log in as a student to apply for this opportunity and track your application.
                     </p>
-
                     <button onClick={() => navigate("/login")}>
-
-                        Login as Student
-
+                        <GraduationCap size={18} />Login as Student
                     </button>
-
                 </div>
-
             )}
-
+             <div className="opportunity-details-background">
             <div className="opportunity-details-header">
-
-                <h1>{opportunity.title || "Untitled Opportunity"}</h1>
-
+                <h2>{opportunity.title || "Untitled Opportunity"}</h2>
                 <p>
-
                     <strong>Company:</strong>{" "}
 
                     {opportunity.company || "Not specified"}
@@ -704,6 +691,7 @@ const newApplication = {
                 </p>
 
             </div>
+            </div>
 
             {isStudent && (
 
@@ -711,13 +699,13 @@ const newApplication = {
 
                     {isApplied ? (
 
-                        <button disabled>Applied</button>
+                        <button disabled><Check size={18} />Applied</button>
 
                     ) : (
 
                         <div className="application-instruction">
 
-                            <h3>Application Instructions</h3>
+                            <h2>Application Instructions</h2>
 
                             <p>
 
@@ -737,7 +725,7 @@ const newApplication = {
 
                             >
 
-                                Open Official Application Page
+                               <ExternalLink size={18} /> Open Official Application Page
 
                             </button>
 
@@ -761,7 +749,7 @@ const newApplication = {
 
                             >
 
-                                I've Applied
+                              <CheckCircle size={18} />  I've Applied
 
                             </button>
 

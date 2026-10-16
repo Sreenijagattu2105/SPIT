@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { UserRound, Trash2, Save, RefreshCw } from "lucide-react";
 function Settings() {
     const navigate = useNavigate();
 
@@ -163,136 +163,149 @@ function Settings() {
         window.location.reload();
     };
 
-    return (
-        <div className="settings-container">
-            <h1>Settings</h1>
+ 
+return (
+    <div className="settings-container">
+        <h1>SETTINGS</h1>
 
-            <p className="settings-intro">
-                Manage your account and notification preferences.
+        <p className="settings-intro">
+            Manage your account and notification preferences.
+        </p>
+
+        {/* Main blue box */}
+        <div className="settings-content-box">
+
+            <section className="settings-section account-settings">
+    
+        <h2>Account Settings</h2>
+<div className="settings-inner-white-box">
+        <p>Update your personal information.</p>
+
+        <button
+            type="button"
+            onClick={() => navigate("/profile")}
+        >
+             <UserRound size={18} /> Manage Profile
+        </button>
+    </div>
+</section>
+
+            <section className="settings-section password-settings">
+    <h2>Change Password</h2>
+
+    <div className="settings-inner-white-box">
+        <label htmlFor="currentPassword">
+            Current Password
+        </label>
+        <input
+            id="currentPassword"
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={e => setCurrentPassword(e.target.value)}
+            placeholder="Enter current password"
+        />
+
+        <label htmlFor="newPassword">
+            New Password
+        </label>
+        <input
+            id="newPassword"
+            type="password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            placeholder="At least 8 characters"
+        />
+
+        <label htmlFor="confirmPassword">
+            Confirm New Password
+        </label>
+        <input
+            id="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter new password"
+        />
+
+        <button type="button" onClick={changePassword}>
+           <RefreshCw size={18} />  Update Password
+        </button>
+    </div>
+</section>
+            <section className="settings-section notification-settings">
+    <h2>Notification Preferences</h2>
+
+    <div className="settings-inner-white-box">
+        <label className="settings-option">
+            <span>Email Alerts</span>
+            <input
+                type="checkbox"
+                checked={emailAlerts}
+                onChange={e => setEmailAlerts(e.target.checked)}
+            />
+        </label>
+
+        <label className="settings-option">
+            <span>Application Updates</span>
+            <input
+                type="checkbox"
+                checked={applicationUpdates}
+                onChange={e =>
+                    setApplicationUpdates(e.target.checked)
+                }
+            />
+        </label>
+
+        <label className="settings-option">
+            <span>New Opportunity Alerts</span>
+            <input
+                type="checkbox"
+                checked={opportunityAlerts}
+                onChange={e =>
+                    setOpportunityAlerts(e.target.checked)
+                }
+            />
+        </label>
+</div>
+        <button
+            className="save-settings-button"
+            type="button"
+            onClick={saveSettings}
+        >
+           <Save size={18} />   Save Settings
+        </button>
+  
+</section>
+        </div>
+
+        {/* Separate blue box for Delete Account */}
+        <section className="settings-section danger-section">
+            <h2>Delete Account</h2>
+
+            <p>
+                Remove your locally stored account information and
+                student session from this browser.
             </p>
 
-            <section className="settings-section">
-                <h2>Account Settings</h2>
-                <p>Update your personal information.</p>
-
-                <button
-                    type="button"
-                    onClick={() => navigate("/profile")}
-                >
-                    Manage Profile
-                </button>
-            </section>
-
-            <section className="settings-section">
-                <h2>Change Password</h2>
-
-                <label htmlFor="currentPassword">
-                    Current Password
-                </label>
-                <input
-                    id="currentPassword"
-                    type="password"
-                    autoComplete="current-password"
-                    value={currentPassword}
-                    onChange={e => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
-                />
-
-                <label htmlFor="newPassword">
-                    New Password
-                </label>
-                <input
-                    id="newPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    placeholder="At least 8 characters"
-                />
-
-                <label htmlFor="confirmPassword">
-                    Confirm New Password
-                </label>
-                <input
-                    id="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter new password"
-                />
-
-                <button type="button" onClick={changePassword}>
-                    Update Password
-                </button>
-            </section>
-
-            <section className="settings-section">
-                <h2>Notification Preferences</h2>
-
-                <label className="settings-option">
-                    <span>Email Alerts</span>
-                    <input
-                        type="checkbox"
-                        checked={emailAlerts}
-                        onChange={e => setEmailAlerts(e.target.checked)}
-                    />
-                </label>
-
-                <label className="settings-option">
-                    <span>Application Updates</span>
-                    <input
-                        type="checkbox"
-                        checked={applicationUpdates}
-                        onChange={e =>
-                            setApplicationUpdates(e.target.checked)
-                        }
-                    />
-                </label>
-
-                <label className="settings-option">
-                    <span>New Opportunity Alerts</span>
-                    <input
-                        type="checkbox"
-                        checked={opportunityAlerts}
-                        onChange={e =>
-                            setOpportunityAlerts(e.target.checked)
-                        }
-                    />
-                </label>
-            </section>
+            <p className="settings-note">
+                This frontend prototype cannot delete an account
+                from the server or database.
+            </p>
 
             <button
-                className="save-settings-button"
+                className="delete-account-button"
                 type="button"
-                onClick={saveSettings}
+                onClick={deleteAccount}
             >
-                Save Settings
+             <Trash2 size={18} /> 
             </button>
+        </section>
+    </div>
+);
 
-            <section className="settings-section danger-section">
-                <h2>Delete Account</h2>
-
-                <p>
-                    Remove your locally stored account information and
-                    student session from this browser.
-                </p>
-
-                <p className="settings-note">
-                    This frontend prototype cannot delete an account
-                    from the server or database.
-                </p>
-
-                <button
-                    className="delete-account-button"
-                    type="button"
-                    onClick={deleteAccount}
-                >
-                    Delete Account
-                </button>
-            </section>
-        </div>
-    );
 }
 
 export default Settings;
