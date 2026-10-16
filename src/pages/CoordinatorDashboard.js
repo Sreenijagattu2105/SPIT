@@ -1,11 +1,10 @@
-import CoordinatorNavbar from "../components/CoordinatorNavbar";
 import {
     Users,
     BriefcaseBusiness,
     ClipboardCheck,
     ChartNoAxesCombined
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function readLocalData(key) {
@@ -19,7 +18,7 @@ function readLocalData(key) {
 
 function CoordinatorDashboard() {
     const navigate = useNavigate();
-    const [search, setSearch] = useState("");
+    const [search] = useState("");
     
     const [lastUpdated, setLastUpdated] = useState(new Date());
 
@@ -124,18 +123,11 @@ function CoordinatorDashboard() {
     }
 ];
    
-
-    const filteredActions = useMemo(() => {
-        const query = search.trim().toLowerCase();
-
-        if (!query) return actions;
-
-        return actions.filter((action) =>
-            `${action.title} ${action.description} ${action.button}`
-                .toLowerCase()
-                .includes(query)
-        );
-    }, [search]);
+const filteredActions = actions.filter((action) =>
+    `${action.title} ${action.description} ${action.button}`
+        .toLowerCase()
+        .includes(search.trim().toLowerCase())
+);
 
    
        

@@ -10,17 +10,11 @@ import {
     FileText,
     Bell,
     Settings as SettingsIcon,
-    LayoutDashboard,
-    LogOut
 } from "lucide-react";
 
 function StudentDashboard() {
     const navigate = useNavigate();
-const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userRole");
-    navigate("/login");
-};
+
     const user =
         JSON.parse(localStorage.getItem("registeredUser")) || {};
 

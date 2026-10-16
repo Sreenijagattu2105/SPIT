@@ -1,5 +1,5 @@
 
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
     LayoutDashboard,
@@ -29,6 +29,7 @@ import logo from "./assets/spit_logo.png";
 
 function Navbar() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [isLoggedIn, setIsLoggedIn] = useState(
         localStorage.getItem("isLoggedIn") === "true"
     );
@@ -112,7 +113,7 @@ function Navbar() {
 
     useEffect(() => {
         setMobileOpen(false);
-    }, [window.location.pathname]);
+    }, [location.pathname]);
 
     const handleLogout = () => {
         localStorage.removeItem("isLoggedIn");

@@ -1,7 +1,6 @@
 import {ChevronLeft,  X,
     Pencil,
     Globe,
-    FileText,
     GlobeLock,
     Trash2,
     Save,

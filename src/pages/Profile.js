@@ -6,7 +6,7 @@ function Profile() {
         JSON.parse(localStorage.getItem("registeredUser")) || {};
 
     const [name, setName] = useState(registeredUser.name || "");
-    const [email, setEmail] = useState(registeredUser.email || "");
+    const [email] = useState(registeredUser.email || "");
     const [phone, setPhone] = useState(registeredUser.phone || "");
     const [qualification, setQualification] = useState(
         registeredUser.qualification || ""

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserPlus, LogIn } from "lucide-react";
-import Login from "./Login";
+
 function addCoordinatorNotification(notification) {
     try {
         const stored = JSON.parse(
