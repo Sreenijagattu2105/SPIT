@@ -1,11 +1,18 @@
-import {ChevronLeft,  X,
-    Pencil,
-    Globe,
-    GlobeLock,
-    Trash2,
-    Save,
-    RefreshCw} from "lucide-react";
+// Import icons used by the opportunity management page.
+import {
+  ChevronLeft, X,
+  Pencil,
+  Globe,
+  GlobeLock,
+  Trash2,
+  Save,
+  RefreshCw
+} from "lucide-react";
+
+// Import React hooks.
 import { useEffect, useMemo, useState } from "react";
+
+// Import navigation.
 import { useNavigate } from "react-router-dom";
 
 const STORAGE_KEY = "opportunities";
@@ -21,7 +28,7 @@ function readOpportunities() {
 
 function CoordinatorOpportunities() {
   const navigate = useNavigate();
-  const [opportunities, setOpportunities] = useState(readOpportunities);
+  const [opportunities, setOpportunities] = useState([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -33,7 +40,9 @@ function CoordinatorOpportunities() {
     company: "",
     type: "Job",
     location: "",
+    companyDescription: "",
     description: "",
+    skills: "",
     eligibility: "",
     deadline: "",
     companyWebsite: "",
@@ -43,22 +52,54 @@ function CoordinatorOpportunities() {
 
   const [form, setForm] = useState(emptyForm);
 
+
   useEffect(() => {
-    const load = () => setOpportunities(readOpportunities());
+    async function loadOpportunities() {
+      try {
+        const response = await fetch(
+          "http://localhost:8080/spit-backend/api/coordinator/opportunities",
+          {
+            method: "GET",
+            credentials: "include"
+          }
+        );
 
-    window.addEventListener("storage", load);
-    window.addEventListener("dashboardDataUpdated", load);
+        const data = await response.json();
 
-    return () => {
-      window.removeEventListener("storage", load);
-      window.removeEventListener("dashboardDataUpdated", load);
-    };
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to load opportunities.");
+        }
+        setOpportunities(
+          data.map((item) => ({
+            ...item,
+            company: item.company ?? item.company_name ?? "",
+            companyDescription:
+              item.companyDescription ?? item.company_description ?? "",
+            description:
+              item.description ?? item.job_description ?? "",
+            type: item.type ?? item.opportunity_type ?? "",
+            salaryStipend:
+              item.salaryStipend ?? item.salary_stipend ?? "",
+            companyWebsite:
+              item.companyWebsite ?? item.company_website ?? "",
+            createdAt: item.createdAt ?? item.created_at ?? "",
+            status: item.status ?? "Draft",
+          }))
+        );
+
+
+      } catch (error) {
+        console.error("Error loading opportunities:", error);
+        setMessage(error.message);
+      }
+    }
+
+    loadOpportunities();
   }, []);
 
+
   function saveOpportunities(updated) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     setOpportunities(updated);
-    window.dispatchEvent(new Event("dashboardDataUpdated"));
   }
 
   // Create a notification for the coordinator.
@@ -106,54 +147,158 @@ function CoordinatorOpportunities() {
   }
 
   // Create a notification for students.
-  function addStudentNotification(type, title, company, opportunityId) {
+
+
+
+  function addStudentNotification(type, title, company, opportunityId, changes = []) {
     let existingNotifications = [];
+    let students = [];
 
     try {
-      const stored = JSON.parse(
+      const storedNotifications = JSON.parse(
         localStorage.getItem("notifications") || "[]"
       );
-      existingNotifications = Array.isArray(stored) ? stored : [];
+      existingNotifications = Array.isArray(storedNotifications)
+        ? storedNotifications
+        : [];
+
+      const storedStudents = JSON.parse(
+        localStorage.getItem("students") || "[]"
+      );
+      students = Array.isArray(storedStudents) ? storedStudents : [];
     } catch {
-      existingNotifications = [];
+      console.error("Unable to read students or notifications.");
+      return;
     }
 
-    const messages = {
-      "opportunity-published":
-        `New opportunity: "${title}" at ${company} is available on SPIT.`,
-      "opportunity-updated":
-        `Opportunity updated: "${title}" at ${company} has new details.`
-    };
+    const preferenceKey =
+      type === "opportunity-published"
+        ? "opportunityPublished"
+        : type === "opportunity-updated"
+          ? "opportunityUpdated"
+          : null;
 
-    const notification = {
-      id: Date.now() + 1,
-      message: messages[type],
-      date: new Date().toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
-      }),
-      read: false,
-      type,
-      opportunityId,
-      opportunityTitle: title,
-      company
-    };
+    if (!preferenceKey) return;
 
-    localStorage.setItem(
-      "notifications",
-      JSON.stringify([notification, ...existingNotifications])
-    );
+    const date = new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
 
-    window.dispatchEvent(new Event("notificationsChange"));
+    const newNotifications = [];
+
+    students.forEach(student => {
+      const studentEmail = String(student.email || "")
+        .trim()
+        .toLowerCase();
+
+      if (!studentEmail) return;
+
+      let preferences = {};
+
+      try {
+        preferences = JSON.parse(
+          localStorage.getItem(`studentSettings:${studentEmail}`) || "{}"
+        );
+      } catch {
+        preferences = {};
+      }
+
+      // Missing preferences default to enabled.
+      if (preferences[preferenceKey] === false) return;
+
+      newNotifications.push({
+        id: `${Date.now()}-${studentEmail}-${type}-${opportunityId}`,
+        studentEmail,
+
+        message:
+          type === "opportunity-published"
+            ? `New opportunity: "${title}" at ${company} is available on SPIT.`
+            : changes.length > 0
+              ? `Opportunity updated: "${title}" at ${company}. Changes: ${changes.join("; ")}.`
+              : `Opportunity updated: "${title}" at ${company} has new details.`,
+
+        date,
+        read: false,
+        type,
+        opportunityId,
+        opportunityTitle: title,
+        company
+      });
+    });
+
+    if (newNotifications.length > 0) {
+      localStorage.setItem(
+        "notifications",
+        JSON.stringify([...newNotifications, ...existingNotifications])
+      );
+
+      window.dispatchEvent(new Event("notificationsChange"));
+    }
   }
+
+
+
+
+
 
   function handleChange(event) {
     const { name, value } = event.target;
     setForm(previous => ({ ...previous, [name]: value }));
   }
 
-  function handleSubmit(event) {
+  async function createOpportunityInBackend(opportunity) {
+    const response = await fetch(
+      "http://localhost:8080/spit-backend/api/coordinator/opportunities",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(opportunity),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Unable to save opportunity.");
+    }
+
+    return data;
+  }
+
+  async function updateOpportunityInBackend(id, opportunity) {
+    const response = await fetch(
+      `http://localhost:8080/spit-backend/api/coordinator/opportunities/${id}`,
+      {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...opportunity,
+          type: opportunity.type.toUpperCase(),
+          status: opportunity.status.toUpperCase(),
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Unable to update opportunity.");
+    }
+
+    return data;
+  }
+
+
+
+  async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
 
@@ -191,12 +336,15 @@ function CoordinatorOpportunities() {
       }
     }
 
+
     const cleanedForm = {
       ...form,
       title: form.title.trim(),
       company: form.company.trim(),
       location: form.location.trim(),
+      companyDescription: form.companyDescription.trim(),
       description: form.description.trim(),
+      skills: form.skills.trim(),
       eligibility: form.eligibility.trim(),
       companyWebsite,
       status: form.status || "Draft"
@@ -205,13 +353,48 @@ function CoordinatorOpportunities() {
     let updated;
     let successMessage;
     let notificationType = null;
+    let changedDetails = [];
+
 
     if (editingId !== null) {
       const previousOpportunity = opportunities.find(
-        item => String(item.id) === String(editingId)
+        (item) => String(item.id) === String(editingId)
       );
 
       const previousStatus = previousOpportunity?.status || "Draft";
+
+      try {
+        await updateOpportunityInBackend(editingId, cleanedForm);
+
+        const response = await fetch(
+          "http://localhost:8080/spit-backend/api/coordinator/opportunities",
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Unable to reload opportunities.");
+        }
+
+        updated = data.map((item) => ({
+          ...item,
+          company: item.company ?? item.company_name ?? "",
+          companyDescription:
+            item.companyDescription ?? item.company_description ?? "",
+          description: item.description ?? item.job_description ?? "",
+          type: item.type ?? item.opportunity_type ?? "",
+          salaryStipend: item.salaryStipend ?? item.salary_stipend ?? "",
+          companyWebsite: item.companyWebsite ?? item.company_website ?? "",
+          status: item.status ?? "Draft",
+        }));
+      } catch (error) {
+        setMessage(error.message || "Unable to update opportunity.");
+        return;
+      }
 
       if (cleanedForm.status === "Published") {
         notificationType =
@@ -222,11 +405,35 @@ function CoordinatorOpportunities() {
         notificationType = "opportunity-unpublished";
       }
 
-      updated = opportunities.map(item =>
-        String(item.id) === String(editingId)
-          ? { ...item, ...cleanedForm, id: item.id }
-          : item
-      );
+      if (notificationType === "opportunity-updated") {
+        const fieldsToCompare = [
+          ["title", "Opportunity title"],
+          ["company", "Company"],
+          ["type", "Opportunity type"],
+          ["location", "Location"],
+          ["companyDescription", "Company description"],
+          ["description", "Job description"],
+          ["skills", "Required skills"],
+          ["eligibility", "Eligibility criteria"],
+          ["deadline", "Application deadline"],
+          ["companyWebsite", "Official application URL"],
+          ["salaryStipend", "Salary / stipend"],
+        ];
+
+        changedDetails = fieldsToCompare
+          .filter(([key]) => {
+            const oldValue = String(
+              key === "description"
+                ? previousOpportunity?.description ?? ""
+                : previousOpportunity?.[key] ?? ""
+            ).trim();
+
+            const newValue = String(cleanedForm[key] ?? "").trim();
+
+            return oldValue !== newValue;
+          })
+          .map(([key, label]) => `${label} changed`);
+      }
 
       successMessage =
         cleanedForm.status === "Published"
@@ -235,17 +442,35 @@ function CoordinatorOpportunities() {
             ? "Opportunity updated and unpublished successfully!"
             : "Opportunity updated successfully!";
     } else {
+
       if (cleanedForm.status === "Published") {
         notificationType = "opportunity-published";
       }
 
-      const newOpportunity = {
-        ...cleanedForm,
-        id: Date.now(),
-        createdAt: new Date().toISOString()
-      };
+
+      let newOpportunity;
+
+      try {
+        const result = await createOpportunityInBackend({
+          ...cleanedForm,
+          type: cleanedForm.type.toUpperCase(),
+          status: cleanedForm.status.toUpperCase()
+        });
+
+        newOpportunity = {
+          ...cleanedForm,
+          id: result.id,
+          createdAt: new Date().toISOString()
+        };
+      } catch (error) {
+        setMessage(error.message || "Unable to save opportunity.");
+        return;
+      }
 
       updated = [...opportunities, newOpportunity];
+
+
+
 
       successMessage =
         cleanedForm.status === "Published"
@@ -272,15 +497,18 @@ function CoordinatorOpportunities() {
         const savedOpportunity =
           editingId !== null
             ? updated.find(
-                item => String(item.id) === String(editingId)
-              )
+              item => String(item.id) === String(editingId)
+            )
             : updated[updated.length - 1];
 
         addStudentNotification(
           notificationType,
           cleanedForm.title,
           cleanedForm.company,
-          savedOpportunity?.id
+          savedOpportunity?.id,
+          notificationType === "opportunity-updated"
+            ? changedDetails
+            : []
         );
       }
     }
@@ -296,7 +524,11 @@ function CoordinatorOpportunities() {
       company: opportunity.company || "",
       type: opportunity.type || "Job",
       location: opportunity.location || "",
-      description: opportunity.description || "",
+      companyDescription: opportunity.companyDescription || "",
+      description: opportunity.jobDescription || opportunity.description || "",
+      skills: Array.isArray(opportunity.skills)
+        ? opportunity.skills.join(", ")
+        : opportunity.skills || "",
       eligibility: opportunity.eligibility || "",
       deadline: opportunity.deadline || "",
       companyWebsite: opportunity.companyWebsite || "",
@@ -309,89 +541,181 @@ function CoordinatorOpportunities() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handlePublishToggle(opportunity) {
-    const currentStatus = opportunity.status || "Draft";
+
+  async function handlePublishToggle(opportunity) {
+    const currentStatus = String(opportunity.status || "Draft").toUpperCase();
+
     const nextStatus =
-      currentStatus === "Published" ? "Unpublished" : "Published";
+      currentStatus === "PUBLISHED" ? "UNPUBLISHED" : "PUBLISHED";
 
-    const updated = opportunities.map(item =>
-      String(item.id) === String(opportunity.id)
-        ? { ...item, status: nextStatus }
-        : item
-    );
+    try {
+      await updateOpportunityInBackend(opportunity.id, {
+        ...opportunity,
+        status: nextStatus
+      });
 
-    saveOpportunities(updated);
-
-    addCoordinatorNotification(
-      nextStatus === "Published"
-        ? "opportunity-published"
-        : "opportunity-unpublished",
-      opportunity.title || "Untitled opportunity",
-      opportunity.company || "Unknown company"
-    );
-
-    // Notify students when the opportunity becomes published.
-    if (nextStatus === "Published") {
-      addStudentNotification(
-        "opportunity-published",
-        opportunity.title || "Untitled opportunity",
-        opportunity.company || "Unknown company",
-        opportunity.id
+      const response = await fetch(
+        "http://localhost:8080/spit-backend/api/coordinator/opportunities",
+        {
+          method: "GET",
+          credentials: "include"
+        }
       );
-    }
 
-    alert(
-      nextStatus === "Published"
-        ? `"${opportunity.title}" published successfully!`
-        : `"${opportunity.title}" unpublished successfully!`
-    );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to reload opportunities.");
+      }
+
+      const updated = data.map((item) => ({
+        ...item,
+        company: item.company ?? item.company_name ?? "",
+        companyDescription:
+          item.companyDescription ?? item.company_description ?? "",
+        description: item.description ?? item.job_description ?? "",
+        type:
+          String(item.type ?? item.opportunity_type ?? "").toUpperCase() === "JOB"
+            ? "Job"
+            : "Internship",
+        salaryStipend: item.salaryStipend ?? item.salary_stipend ?? "",
+        companyWebsite: item.companyWebsite ?? item.company_website ?? "",
+        status:
+          String(item.status || "DRAFT").toUpperCase() === "PUBLISHED"
+            ? "Published"
+            : String(item.status || "DRAFT").toUpperCase() === "UNPUBLISHED"
+              ? "Unpublished"
+              : "Draft"
+      }));
+
+      saveOpportunities(updated);
+
+      addCoordinatorNotification(
+        nextStatus === "PUBLISHED"
+          ? "opportunity-published"
+          : "opportunity-unpublished",
+        opportunity.title || "Untitled opportunity",
+        opportunity.company || "Unknown company"
+      );
+
+      if (nextStatus === "PUBLISHED") {
+        addStudentNotification(
+          "opportunity-published",
+          opportunity.title || "Untitled opportunity",
+          opportunity.company || "Unknown company",
+          opportunity.id
+        );
+      }
+
+      alert(
+        nextStatus === "PUBLISHED"
+          ? `"${opportunity.title}" published successfully!`
+          : `"${opportunity.title}" unpublished successfully!`
+      );
+    } catch (error) {
+      console.error("Publish/Unpublish error:", error);
+      alert(error.message || "Unable to update opportunity status.");
+    }
   }
 
-  function handleDelete(id) {
-    if (!window.confirm("Are you sure you want to delete this opportunity?")) {
+
+
+  async function handleDelete(id) {
+    const opportunity = opportunities.find(
+      (item) => String(item.id) === String(id)
+    );
+
+    if (!opportunity) {
+      alert("Opportunity not found.");
       return;
     }
 
-    const updated = opportunities.filter(
-      item => String(item.id) !== String(id)
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${opportunity.title}"?`
     );
 
-    saveOpportunities(updated);
+    if (!confirmed) return;
 
-    if (String(editingId) === String(id)) {
-      setEditingId(null);
-      setForm(emptyForm);
+    try {
+      const response = await fetch(
+        `http://localhost:8080/spit-backend/api/coordinator/opportunities/${id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to delete opportunity.");
+      }
+
+      // Reload the list from the backend.
+      const reloadResponse = await fetch(
+        "http://localhost:8080/spit-backend/api/coordinator/opportunities",
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const updated = await reloadResponse.json();
+
+      if (!reloadResponse.ok) {
+        throw new Error("Deleted, but unable to reload opportunities.");
+      }
+
+      saveOpportunities(
+        updated.map((item) => ({
+          ...item,
+          company: item.company ?? item.company_name ?? "",
+          companyDescription:
+            item.companyDescription ?? item.company_description ?? "",
+          description: item.description ?? item.job_description ?? "",
+          type:
+            (item.type ?? item.opportunity_type ?? "").toUpperCase() === "JOB"
+              ? "Job"
+              : "Internship",
+          salaryStipend: item.salaryStipend ?? item.salary_stipend ?? "",
+          companyWebsite: item.companyWebsite ?? item.company_website ?? "",
+          status: (item.status || "DRAFT").toUpperCase() === "PUBLISHED"
+            ? "Published"
+            : (item.status || "DRAFT").toUpperCase() === "UNPUBLISHED"
+              ? "Unpublished"
+              : "Draft",
+        }))
+      );
+
+      alert("Opportunity deleted successfully!");
+    } catch (error) {
+      console.error("Delete opportunity error:", error);
+      alert(error.message || "Unable to delete opportunity.");
     }
-
-    alert("Opportunity deleted successfully!");
   }
+
 
   const filteredOpportunities = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return opportunities.filter(item => {
-      const matchesSearch =
-        `${item.title || ""} ${item.company || ""} ${item.location || ""}`
-          .toLowerCase()
-          .includes(query);
+    return opportunities.filter((item) => {
+      const title = String(item.title || "").toLowerCase();
+      const company = String(item.company || "").toLowerCase();
+      const location = String(item.location || "").toLowerCase();
 
-      const matchesType =
-        filterType === "All" || item.type === filterType;
-
-      const status = item.status || "Draft";
-      const matchesStatus =
-        filterStatus === "All" || status === filterStatus;
-
-      return matchesSearch && matchesType && matchesStatus;
+      return (
+        title.includes(query) ||
+        company.includes(query) ||
+        location.includes(query)
+      );
     });
-  }, [opportunities, search, filterType, filterStatus]);
-
+  }, [opportunities, search]);
   return (
     <div className="coordinator-dashboard-container">
       <div className="coordinator-page-heading">
         <h1>MANAGE &amp; PUBLISH OPPORTUNITIES</h1>
-        </div>
-        <section className="coordinator-welcome">
+      </div>
+      <section className="coordinator-welcome">
         <p>
           Create opportunities, save drafts, and publish listings for students.
         </p>
@@ -423,7 +747,16 @@ function CoordinatorOpportunities() {
                 required
               />
             </label>
-
+            <label className="opportunity-full-width">
+              Company Description
+              <textarea
+                name="companyDescription"
+                rows="4"
+                placeholder="Enter information about the company..."
+                value={form.companyDescription}
+                onChange={handleChange}
+              />
+            </label>
             <label>
               Type *
               <select name="type" value={form.type} onChange={handleChange}>
@@ -485,13 +818,25 @@ function CoordinatorOpportunities() {
             </label>
 
             <label className="opportunity-full-width">
-              Description *
+              Job Description *
               <textarea
                 name="description"
                 rows="4"
+                placeholder="Describe the role and responsibilities..."
                 value={form.description}
                 onChange={handleChange}
                 required
+              />
+            </label>
+
+            <label className="opportunity-full-width">
+              Skills Required
+              <input
+                type="text"
+                name="skills"
+                placeholder="e.g. Java, SQL, React"
+                value={form.skills}
+                onChange={handleChange}
               />
             </label>
 
@@ -509,29 +854,29 @@ function CoordinatorOpportunities() {
             </label>
           </div>
 
-         <button type="submit">
-    {editingId !== null ? (
-        <>
-            <RefreshCw size={18} />
-            Update Opportunity
-        </>
-    ) : form.status === "Published" ? (
-        <>
-            <Globe size={18} />
-            Publish Opportunity
-        </>
-    ) : form.status === "Unpublished" ? (
-        <>
-            <GlobeLock size={18} />
-            Save as Unpublished
-        </>
-    ) : (
-        <>
-            <Save size={18} />
-            Save as Draft
-        </>
-    )}
-</button>
+          <button type="submit">
+            {editingId !== null ? (
+              <>
+                <RefreshCw size={18} />
+                Update Opportunity
+              </>
+            ) : form.status === "Published" ? (
+              <>
+                <Globe size={18} />
+                Publish Opportunity
+              </>
+            ) : form.status === "Unpublished" ? (
+              <>
+                <GlobeLock size={18} />
+                Save as Unpublished
+              </>
+            ) : (
+              <>
+                <Save size={18} />
+                Save as Draft
+              </>
+            )}
+          </button>
 
           {editingId !== null && (
             <button
@@ -542,7 +887,7 @@ function CoordinatorOpportunities() {
                 setMessage("");
               }}
             >
-            <X size={18} />  Cancel Edit
+              <X size={18} />  Cancel Edit
             </button>
           )}
         </form>
@@ -559,24 +904,7 @@ function CoordinatorOpportunities() {
             placeholder="Search title, company or location..."
           />
 
-          <select
-            value={filterType}
-            onChange={event => setFilterType(event.target.value)}
-          >
-            <option value="All">All Types</option>
-            <option value="Job">Jobs</option>
-            <option value="Internship">Internships</option>
-          </select>
 
-          <select
-            value={filterStatus}
-            onChange={event => setFilterStatus(event.target.value)}
-          >
-            <option value="All">All Statuses</option>
-            <option value="Draft">Draft</option>
-            <option value="Published">Published</option>
-            <option value="Unpublished">Unpublished</option>
-          </select>
         </div>
 
         {filteredOpportunities.length === 0 ? (
@@ -586,6 +914,8 @@ function CoordinatorOpportunities() {
             <table className="opportunity-management-table">
               <thead>
                 <tr>
+                  <th>S.No.</th>
+                  <th>ID</th>
                   <th>Title</th>
                   <th>Company</th>
                   <th>Type</th>
@@ -597,11 +927,22 @@ function CoordinatorOpportunities() {
               </thead>
 
               <tbody>
-                {filteredOpportunities.map(item => {
-                  const status = item.status || "Draft";
+
+                {filteredOpportunities.map((item, index) => {
+                  const rawStatus = String(item.status || "DRAFT").toUpperCase();
+
+                  const status =
+                    rawStatus === "PUBLISHED"
+                      ? "Published"
+                      : rawStatus === "UNPUBLISHED"
+                        ? "Unpublished"
+                        : "Draft";
+
 
                   return (
                     <tr key={item.id}>
+                      <td>{index + 1}</td>
+                      <td>{item.id}</td>
                       <td>{item.title}</td>
                       <td>{item.company}</td>
                       <td>{item.type}</td>
@@ -634,31 +975,33 @@ function CoordinatorOpportunities() {
                           type="button"
                           onClick={() => handleEdit(item)}
                         >
-                        <Pencil size={18} /> 
+                          <Pencil size={18} />
                         </button>
+
 
                         <button
                           type="button"
                           onClick={() => handlePublishToggle(item)}
                         >
-                           {status === "Published" ? (
-        <>
-            <GlobeLock size={18} />
-            Unpublish
-        </>
-    ) : (
-        <>
-            <Globe size={18} />
-            Publish
-        </>
-    )}
+                          {status === "Published" ? (
+                            <>
+                              <GlobeLock size={18} />
+                              Unpublish
+                            </>
+                          ) : (
+                            <>
+                              <Globe size={18} />
+                              Publish
+                            </>
+                          )}
                         </button>
+
 
                         <button
                           type="button"
                           onClick={() => handleDelete(item.id)}
                         >
-                        <Trash2 size={18} />
+                          <Trash2 size={18} />
                         </button>
                       </td>
                     </tr>
@@ -675,7 +1018,7 @@ function CoordinatorOpportunities() {
           type="button"
           onClick={() => navigate("/coordinator-dashboard")}
         >
-         <ChevronLeft size={18} /> Back to Dashboard
+          <ChevronLeft size={18} /> Back to Dashboard
         </button>
       </section>
     </div>

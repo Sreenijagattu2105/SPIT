@@ -1,21 +1,34 @@
+/*
+ * About.jsx
+ * ---------
+ * Displays information about SPIT (Smart Internship & Placement
+ * Tracker), including its mission, vision, objectives, workflow,
+ * and career support features.
+ */
+
+// Import navigation hook from React Router.
 import { useNavigate } from "react-router-dom";
-import {  UserPlus, ClipboardList, BriefcaseBusiness, BookOpen } from "lucide-react";
+
+// Import icons used throughout the About page.
+import {
+    UserPlus,
+    ClipboardList,
+    BriefcaseBusiness,
+    BookOpen
+} from "lucide-react";
 
 function About() {
+    // Initialize navigation for page transitions.
     const navigate = useNavigate();
 
     return (
         <div className="about-container">
 
-            {/* About SPIT */}
-  <h1>ABOUT US</h1>
+            {/* About SPIT introduction */}
+            <h1>ABOUT US</h1>
+
             <section className="about-section">
-
-              
-
-                <h2>
-                    Smart Internship & Placement Tracker
-                </h2>
+                <h2>Smart Internship & Placement Tracker</h2>
 
                 <p>
                     Smart Internship & Placement Tracker (SPIT) is a
@@ -32,14 +45,10 @@ function About() {
                     placement coordinators can manage opportunities
                     and student information.
                 </p>
-
             </section>
 
-
-            {/* Mission */}
-
+            {/* Describe the mission of SPIT */}
             <section className="mission-section">
-
                 <h2>Our Mission</h2>
 
                 <p>
@@ -48,14 +57,10 @@ function About() {
                     software development internship and placement
                     opportunities and prepare for their careers.
                 </p>
-
             </section>
 
-
-            {/* Vision */}
-
+            {/* Describe the vision of SPIT */}
             <section className="vision-section">
-
                 <h2>Our Vision</h2>
 
                 <p>
@@ -64,14 +69,10 @@ function About() {
                     the technical and professional skills needed for
                     successful careers in Full Stack Development.
                 </p>
-
             </section>
 
-
-            {/* Objectives */}
-
+            {/* List the main objectives of SPIT */}
             <section className="objectives-section">
-
                 <h2>Our Objectives</h2>
 
                 <ul>
@@ -97,23 +98,16 @@ function About() {
                         students.
                     </li>
                 </ul>
-
             </section>
 
-
-            {/* How SPIT Works */}
-
+            {/* Explain the main steps in using SPIT */}
             <section className="how-it-works-section">
-
                 <h2>How SPIT Works</h2>
 
                 <div className="steps">
 
-
-                    {/* Step 1 */}
-
+                    {/* Step 1: Student registration */}
                     <div className="step">
-
                         <h3>1. Register</h3>
 
                         <p>
@@ -124,16 +118,13 @@ function About() {
                         <button
                             onClick={() => navigate("/register")}
                         >
-                            <UserPlus size={18} />Register Now
+                            <UserPlus size={18} />
+                            Register Now
                         </button>
-
                     </div>
 
-
-                    {/* Step 2 */}
-
+                    {/* Step 2: Explore available opportunities */}
                     <div className="step">
-
                         <h3>2. Explore</h3>
 
                         <p>
@@ -146,16 +137,13 @@ function About() {
                         <button
                             onClick={() => navigate("/opportunities")}
                         >
-                            <BriefcaseBusiness size={18} />Explore Opportunities
+                            <BriefcaseBusiness size={18} />
+                            Explore Opportunities
                         </button>
-
                     </div>
 
-
-                    {/* Step 3 */}
-
+                    {/* Step 3: Find opportunities and apply */}
                     <div className="step">
-
                         <h3>3. Apply</h3>
 
                         <p>
@@ -167,16 +155,13 @@ function About() {
                         <button
                             onClick={() => navigate("/opportunities")}
                         >
-                            <BriefcaseBusiness size={18} />Find Opportunities
+                            <BriefcaseBusiness size={18} />
+                            Find Opportunities
                         </button>
-
                     </div>
 
-
-                    {/* Step 4 */}
-
+                    {/* Step 4: Track application progress */}
                     <div className="step">
-
                         <h3>4. Track</h3>
 
                         <p>
@@ -188,24 +173,24 @@ function About() {
 
                         <button
                             onClick={() => {
-                                alert("Please login as a student to track your applications.");
+                                // Ask the user to log in before tracking.
+                                alert(
+                                    "Please login as a student to track your applications."
+                                );
+
                                 navigate("/login");
                             }}
                         >
-                            <ClipboardList size={18} />Track Applications
+                            <ClipboardList size={18} />
+                            Track Applications
                         </button>
-
                     </div>
 
                 </div>
-
             </section>
 
-
-            {/* Career Support */}
-
+            {/* Highlight career preparation resources */}
             <section className="career-support-section">
-
                 <h2>Career Support</h2>
 
                 <p>
@@ -219,16 +204,13 @@ function About() {
                 <button
                     onClick={() => navigate("/career-resources")}
                 >
-                    <BookOpen size={18} />Explore Career Resources
+                    <BookOpen size={18} />
+                    Explore Career Resources
                 </button>
-
             </section>
 
-
-            {/* Call To Action */}
-
+            {/* Encourage visitors to explore SPIT */}
             <section className="about-cta">
-
                 <h2>Ready to Explore Your Career Opportunities?</h2>
 
                 <p>
@@ -240,19 +222,21 @@ function About() {
                 <button
                     onClick={() => navigate("/opportunities")}
                 >
-                    <BriefcaseBusiness size={18} />Explore Opportunities
+                    <BriefcaseBusiness size={18} />
+                    Explore Opportunities
                 </button>
 
                 <button
                     onClick={() => navigate("/register")}
                 >
-                    <UserPlus size={18} />Create an Account
+                    <UserPlus size={18} />
+                    Create an Account
                 </button>
-
             </section>
 
         </div>
     );
 }
 
+// Export About so it can be used in the application routes.
 export default About;

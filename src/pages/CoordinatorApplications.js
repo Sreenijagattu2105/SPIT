@@ -1,51 +1,135 @@
-import {ChevronLeft} from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const APPLICATIONS_KEY = "startedApplications";
+const API_URL =
+    "http://localhost:8080/spit-backend/api/coordinator/applications";
 
 const STATUSES = [
     "Applied",
-    "Pending",
-    "Under Review",
+    "In Progress",
     "Shortlisted",
     "Selected",
-    "Rejected"
+    "Rejected",
+    "Withdrawn"
 ];
 
-function readApplications() {
-    try {
-        const data = JSON.parse(
-            localStorage.getItem(APPLICATIONS_KEY) || "[]"
-        );
+// Convert database application statuses into readable labels.
+function formatStatus(databaseStatus) {
+    const status = String(databaseStatus || "APPLIED")
+        .toUpperCase()
+        .replace(/\s+/g, "_");
 
-        return Array.isArray(data) ? data : [];
-    } catch {
-        return [];
+    const statusMap = {
+        APPLIED: "Applied",
+        IN_PROGRESS: "In Progress",
+        SHORTLISTED: "Shortlisted",
+        SELECTED: "Selected",
+        REJECTED: "Rejected",
+        WITHDRAWN: "Withdrawn"
+    };
+
+    return statusMap[status] || "Applied";
+}
+
+function formatAppliedDate(value) {
+    if (value === null || value === undefined || value === "") {
+        return "Not recorded";
     }
+
+    let date;
+
+    if (typeof value === "number") {
+        // Spring/Jackson may serialize a SQL timestamp as milliseconds.
+        date = new Date(value);
+    } else {
+        date = new Date(value);
+    }
+
+    if (Number.isNaN(date.getTime())) {
+        return "Not recorded";
+    }
+
+    return date.toLocaleDateString("en-CA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    });
 }
 
 function CoordinatorApplications() {
     const navigate = useNavigate();
 
-    const [applications, setApplications] = useState(readApplications);
+    const [applications, setApplications] = useState([]);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        function loadApplications() {
-            setApplications(readApplications());
+        let cancelled = false;
+
+        async function loadApplications() {
+            setLoading(true);
+            setError("");
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        Accept: "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Unable to load applications (${response.status}).`
+                    );
+                }
+
+                const data = await response.json();
+
+                if (!Array.isArray(data)) {
+                    throw new Error(
+                        "The server returned an unexpected applications response."
+                    );
+                }
+
+                const normalizedApplications = data.map((item) => ({
+                    ...item,
+                    applicationId: item.applicationId,
+                    studentName: item.studentName,
+                    studentEmail: item.studentEmail,
+                    title: item.title,
+                    company: item.company,
+                    appliedDate: formatAppliedDate(item.appliedDate),
+                    status: formatStatus(item.status)
+                }));
+
+                if (!cancelled) {
+                    setApplications(normalizedApplications);
+                }
+            } catch (err) {
+                console.error("Applications loading error:", err);
+
+                if (!cancelled) {
+                    setError(
+                        err.message ||
+                        "Unable to load student applications."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
         }
 
-        window.addEventListener("storage", loadApplications);
-        window.addEventListener("dashboardDataUpdated", loadApplications);
+        loadApplications();
 
         return () => {
-            window.removeEventListener("storage", loadApplications);
-            window.removeEventListener(
-                "dashboardDataUpdated",
-                loadApplications
-            );
+            cancelled = true;
         };
     }, []);
 
@@ -55,44 +139,45 @@ function CoordinatorApplications() {
         return applications.filter((application) => {
             const searchableText = [
                 application.studentName,
-                application.name,
                 application.studentEmail,
-                application.email,
                 application.title,
-                application.company,
-                application.location
+                application.company
             ]
                 .filter(Boolean)
                 .join(" ")
                 .toLowerCase();
 
-            const status = String(application.status || "Applied");
-
             return (
                 searchableText.includes(query) &&
-                (statusFilter === "All" || status === statusFilter)
+                (statusFilter === "All" ||
+                    application.status === statusFilter)
             );
         });
     }, [applications, search, statusFilter]);
 
-    function getStatus(application) {
-        const status = String(application.status || "Applied");
+    // Count applications marked as selected.
+    const selectedApplications = applications.filter((item) =>
+        ["Selected"].includes(item.status)
+    ).length;
 
-        return STATUSES.includes(status) ? status : "Applied";
-    }
+    // Count applications that are still progressing.
+    const inProgressApplications = applications.filter((item) =>
+        ["Applied", "In Progress", "Shortlisted"].includes(
+            item.status
+        )
+    ).length;
 
     return (
         <div className="coordinator-dashboard-container">
-            
-                <div className="coordinator-page-heading">
-                    <h1>TRACK APPLICATIONS</h1>
-                    </div>
-                    <section className="coordinator-welcome">
-                    <p>
-                        Monitor student applications and view the latest
-                        status reported by each student.
-                    </p>
-                
+            <div className="coordinator-page-heading">
+                <h1>TRACK APPLICATIONS</h1>
+            </div>
+
+            <section className="coordinator-welcome">
+                <p>
+                    Monitor student applications and view the latest
+                    status reported by each student.
+                </p>
             </section>
 
             <section className="coordinator-summary">
@@ -106,25 +191,13 @@ function CoordinatorApplications() {
                     </div>
 
                     <div className="coordinator-stat-card">
-                        <h3>
-                            {applications.filter((item) =>
-                                ["selected", "placed"].includes(
-                                    String(item.status || "").toLowerCase()
-                                )
-                            ).length}
-                        </h3>
+                        <h3>{selectedApplications}</h3>
                         <hr />
                         <p>Selected / Placed</p>
                     </div>
 
                     <div className="coordinator-stat-card">
-                        <h3>
-                            {applications.filter((item) =>
-                                ["pending", "applied", "under review"].includes(
-                                    String(item.status || "Applied").toLowerCase()
-                                )
-                            ).length}
-                        </h3>
+                        <h3>{inProgressApplications}</h3>
                         <hr />
                         <p>In Progress</p>
                     </div>
@@ -160,7 +233,11 @@ function CoordinatorApplications() {
                     </select>
                 </div>
 
-                {filteredApplications.length === 0 ? (
+                {loading ? (
+                    <p>Loading student applications...</p>
+                ) : error ? (
+                    <p role="alert">{error}</p>
+                ) : filteredApplications.length === 0 ? (
                     <p>
                         {applications.length === 0
                             ? "No applications have been recorded yet."
@@ -184,23 +261,16 @@ function CoordinatorApplications() {
                             <tbody>
                                 {filteredApplications.map(
                                     (application, index) => (
-                                        <tr
-                                            key={
-                                                application.applicationId ||
-                                                `${application.studentEmail || application.email || "student"}-${application.title || "opportunity"}-${index}`
-                                            }
-                                        >
+                                        <tr key={application.applicationId}>
                                             <td>{index + 1}</td>
 
                                             <td>
                                                 {application.studentName ||
-                                                    application.name ||
                                                     "Student name unavailable"}
                                             </td>
 
                                             <td>
                                                 {application.studentEmail ||
-                                                    application.email ||
                                                     "Not provided"}
                                             </td>
 
@@ -214,19 +284,16 @@ function CoordinatorApplications() {
                                                     "Not provided"}
                                             </td>
 
-                                            <td>
-                                                {application.appliedDate ||
-                                                    "Not recorded"}
-                                            </td>
+                                            <td>{application.appliedDate}</td>
 
                                             <td>
                                                 <span
                                                     className="application-status"
-                                                    data-status={getStatus(application)
+                                                    data-status={application.status
                                                         .toLowerCase()
                                                         .replace(/\s+/g, "-")}
                                                 >
-                                                    {getStatus(application)}
+                                                    {application.status}
                                                 </span>
                                             </td>
                                         </tr>
@@ -243,7 +310,7 @@ function CoordinatorApplications() {
                     type="button"
                     onClick={() => navigate("/coordinator-dashboard")}
                 >
-                   <ChevronLeft size={18} />  Back to Dashboard
+                    <ChevronLeft size={18} /> Back to Dashboard
                 </button>
             </section>
         </div>

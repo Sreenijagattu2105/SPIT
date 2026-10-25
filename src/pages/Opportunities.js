@@ -2,573 +2,471 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { useState, useEffect } from "react";
 
-import staticOpportunities from "../opportunitiesData";
-import {  Share2, ArrowRight, FilterX, Bookmark, House } from "lucide-react";
+
+import { ArrowRight, FilterX, Bookmark, House } from "lucide-react";
 
 
-function getCoordinatorOpportunities() {
+async function getCoordinatorOpportunities() {
+    const response = await fetch(
+        "http://localhost:8080/spit-backend/api/student/opportunities",
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
 
-          try {
+    const data = await response.json();
 
-                    const data = JSON.parse(
+    if (!response.ok) {
+        throw new Error(
+            data.message || "Unable to load published opportunities."
+        );
+    }
 
-                              localStorage.getItem("opportunities") || "[]"
-
-                    );
-
-                    return Array.isArray(data) ? data : [];
-
-          } catch {
-
-                    return [];
-
-          }
-
+    return data.map((item) => ({
+        ...item,
+        id: item.id ?? item.opportunity_id,
+        company: item.company ?? item.company_name ?? "",
+        companyDescription:
+            item.companyDescription ?? item.company_description ?? "",
+        description: item.description ?? item.job_description ?? "",
+        type:
+            (item.type ?? item.opportunity_type ?? "").toUpperCase() === "JOB"
+                ? "Job"
+                : "Internship",
+        salaryStipend:
+            item.salaryStipend ?? item.salary_stipend ?? "",
+        companyWebsite:
+            item.companyWebsite ?? item.company_website ?? "",
+        status:
+            (item.status || "").toUpperCase() === "PUBLISHED"
+                ? "Published"
+                : item.status,
+    }));
 }
+
 
 
 
 function Opportunities() {
 
-          const location = useLocation();
+    const location = useLocation();
 
-          const navigate = useNavigate();
+    const navigate = useNavigate();
 
 
 
-          const selectedCompany = location.state?.selectedCompany || "";
+    const selectedCompany = location.state?.selectedCompany || "";
 
 
 
-          const [search, setSearch] = useState(location.state?.keyword || "");
+    const [search, setSearch] = useState(location.state?.keyword || "");
 
-          const [type, setType] = useState(location.state?.type || "");
+    const [type, setType] = useState(location.state?.type || "");
 
-          const [locationFilter, setLocationFilter] = useState(
+    const [locationFilter, setLocationFilter] = useState(
 
-                    location.state?.location || ""
+        location.state?.location || ""
 
-          );
+    );
 
-          const [sortBy, setSortBy] = useState("");
+    const [sortBy, setSortBy] = useState("");
 
-          const [allOpportunities, setAllOpportunities] = useState([]);
+    const [allOpportunities, setAllOpportunities] = useState([]);
 
-          const [savedOpportunities, setSavedOpportunities] = useState(() => {
+    const [savedOpportunities, setSavedOpportunities] = useState(() => {
 
-                    try {
+        try {
 
-                              const data = JSON.parse(
+            const data = JSON.parse(
 
-                                        localStorage.getItem("savedOpportunities") || "[]"
+                localStorage.getItem("savedOpportunities") || "[]"
 
-                              );
+            );
 
-                              return Array.isArray(data) ? data : [];
+            return Array.isArray(data) ? data : [];
 
-                    } catch {
+        } catch {
 
-                              return [];
+            return [];
 
-                    }
+        }
 
-          });
+    });
 
 
 
-          useEffect(() => {
 
-                    const loadOpportunities = () => {
+    useEffect(() => {
+        let isActive = true;
 
-                              const coordinatorOpportunities = getCoordinatorOpportunities();
+        const loadOpportunities = async () => {
+            try {
+                const published = await getCoordinatorOpportunities();
 
-
-
-                              // Only published coordinator opportunities are public.
-
-                              const published = coordinatorOpportunities.filter(
-
-                                        item => item.status === "Published"
-
-                              );
-
-
-
-                              const combined = [...staticOpportunities, ...published];
-
-
-
-                              // Coordinator records take priority if IDs match.
-
-                              const unique = combined.reduce((result, item) => {
-
-                                        const index = result.findIndex(
-
-                                                  existing => String(existing.id) === String(item.id)
-
-                                        );
-
-
-
-                                        if (index === -1) {
-
-                                                  result.push(item);
-
-                                        } else {
-
-                                                  result[index] = item;
-
-                                        }
-
-
-
-                                        return result;
-
-                              }, []);
-
-
-
-                              setAllOpportunities(unique);
-
-                    };
-
-
-
-                    loadOpportunities();
-
-
-
-                    window.addEventListener("storage", loadOpportunities);
-
-                    window.addEventListener("dashboardDataUpdated", loadOpportunities);
-
-
-
-                    return () => {
-
-                              window.removeEventListener("storage", loadOpportunities);
-
-                              window.removeEventListener("dashboardDataUpdated", loadOpportunities);
-
-                    };
-
-          }, []);
-
-const handleShare = (opportunity) => {
-    const shareUrl =
-        `https://spit-sage.vercel.app/opportunity-details?id=${encodeURIComponent(opportunity.id)}`;
-
-    const message =
-        `Check out this opportunity at ${opportunity.company}: ${opportunity.title}\n\n${shareUrl}`;
-
-    const whatsappUrl =
-        `https://wa.me/?text=${encodeURIComponent(message)}`;
-
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-};
-
-
-
-
-          const handleSave = opportunity => {
-
-                    if (
-
-                              localStorage.getItem("isLoggedIn") !== "true" ||
-
-                              localStorage.getItem("userRole") !== "student"
-
-                    ) {
-
-                              alert("Please login as a student to save an opportunity.");
-
-                              navigate("/login");
-
-                              return;
-
-                    }
-
-
-
-                    const alreadySaved = savedOpportunities.some(
-
-                              item => String(item.id) === String(opportunity.id)
-
+                if (isActive) {
+                    setAllOpportunities(
+                        published.filter(
+                            (item) =>
+                                String(item.status).toUpperCase() === "PUBLISHED"
+                        )
                     );
+                }
+            } catch (error) {
+                console.error("Error loading student opportunities:", error);
 
+                if (isActive) {
+                    setAllOpportunities([]);
+                }
+            }
+        };
 
+        loadOpportunities();
 
-                    if (alreadySaved) {
+        return () => {
+            isActive = false;
+        };
+    }, []);
 
-                              alert("Opportunity already saved.");
 
-                              return;
+    const handleSave = async (opportunity) => {
+        if (
+            localStorage.getItem("isLoggedIn") !== "true" ||
+            localStorage.getItem("userRole") !== "student"
+        ) {
+            alert("Please login as a student to save an opportunity.");
+            navigate("/login");
+            return;
+        }
 
-                    }
+        try {
+            const response = await fetch(
+                `http://localhost:8080/spit-backend/api/student/saved-opportunities`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        opportunityId: opportunity.id,
+                    }),
+                }
+            );
 
+            const data = await response.json();
 
+            if (response.status === 409) {
+                alert("Opportunity already saved.");
+                return;
+            }
 
-                    const updatedSaved = [...savedOpportunities, opportunity];
+            if (!response.ok) {
+                throw new Error(
+                    data.message || "Unable to save the opportunity."
+                );
+            }
 
-                    setSavedOpportunities(updatedSaved);
+            const savedOpportunity = {
+                ...opportunity,
+                saved: true,
+            };
 
-                    localStorage.setItem("savedOpportunities", JSON.stringify(updatedSaved));
+            setSavedOpportunities((previous) => [
+                ...previous.filter(
+                    (item) => String(item.id) !== String(opportunity.id)
+                ),
+                savedOpportunity,
+            ]);
 
+            window.dispatchEvent(new Event("savedOpportunitiesChange"));
 
+            alert("Opportunity saved successfully!");
+        } catch (error) {
+            console.error("Error saving opportunity:", error);
+            alert(error.message || "Unable to save the opportunity.");
+        }
+    };
 
-                    let existingNotifications = [];
 
 
 
-                    try {
+    const filteredOpportunities = allOpportunities.filter(opportunity => {
 
-                              existingNotifications = JSON.parse(
+        const company = String(opportunity.company || "");
 
-                                        localStorage.getItem("notifications") || "[]"
+        const title = String(opportunity.title || "");
 
-                              );
+        const skills = Array.isArray(opportunity.skills)
 
-                              if (!Array.isArray(existingNotifications)) {
+            ? opportunity.skills.join(" ")
 
-                                        existingNotifications = [];
+            : String(opportunity.skills || "");
 
-                              }
+        const opportunityLocation = String(opportunity.location || "");
 
-                    } catch {
 
-                              existingNotifications = [];
 
-                    }
+        const matchesCompany =
 
+            !selectedCompany ||
 
+            company.toLowerCase() === selectedCompany.toLowerCase();
 
-                    const newNotification = {
 
-                              id: Date.now(),
 
-                              message: `Opportunity Saved: You saved the ${opportunity.title} opportunity at ${opportunity.company}.`,
+        const searchText = search.toLowerCase().trim();
 
-                              date: new Date().toLocaleDateString("en-GB", {
+        const matchesSearch =
 
-                                        day: "2-digit",
+            title.toLowerCase().includes(searchText) ||
 
-                                        month: "short",
+            company.toLowerCase().includes(searchText) ||
 
-                                        year: "numeric"
+            skills.toLowerCase().includes(searchText);
 
-                              }),
 
-                              read: false
 
-                    };
+        const matchesType = !type || opportunity.type === type;
 
 
 
-                    localStorage.setItem(
+        const matchesLocation =
 
-                              "notifications",
+            !locationFilter ||
 
-                              JSON.stringify([newNotification, ...existingNotifications])
+            opportunityLocation.toLowerCase().includes(
 
-                    );
+                locationFilter.toLowerCase()
 
+            );
 
 
-                    window.dispatchEvent(new Event("notificationsChange"));
 
-                    alert("Opportunity saved successfully!");
+        return matchesCompany && matchesSearch && matchesType && matchesLocation;
 
-          };
+    });
 
 
 
-          const filteredOpportunities = allOpportunities.filter(opportunity => {
+    const sortedOpportunities = [...filteredOpportunities].sort((a, b) => {
 
-                    const company = String(opportunity.company || "");
+        if (sortBy === "company") {
 
-                    const title = String(opportunity.title || "");
+            return String(a.company || "").localeCompare(String(b.company || ""));
 
-                    const skills = Array.isArray(opportunity.skills)
+        }
 
-                              ? opportunity.skills.join(" ")
+        if (sortBy === "title") {
 
-                              : String(opportunity.skills || "");
+            return String(a.title || "").localeCompare(String(b.title || ""));
 
-                    const opportunityLocation = String(opportunity.location || "");
+        }
 
+        return 0;
 
+    });
 
-                    const matchesCompany =
 
-                              !selectedCompany ||
 
-                              company.toLowerCase() === selectedCompany.toLowerCase();
+    const clearFilters = () => {
 
+        setSearch("");
 
+        setType("");
 
-                    const searchText = search.toLowerCase().trim();
+        setLocationFilter("");
 
-                    const matchesSearch =
+        setSortBy("");
 
-                              title.toLowerCase().includes(searchText) ||
+        navigate("/opportunities", { replace: true, state: {} });
 
-                              company.toLowerCase().includes(searchText) ||
+    };
 
-                              skills.toLowerCase().includes(searchText);
 
 
+    return (
 
-                    const matchesType = !type || opportunity.type === type;
+        <div className="opportunities-container">
 
+            {!selectedCompany && (
 
+                <>
 
-                    const matchesLocation =
+                    <h1>OPPORTUNITIES</h1>
 
-                              !locationFilter ||
 
-                              opportunityLocation.toLowerCase().includes(
 
-                                        locationFilter.toLowerCase()
+                    <div className="filters">
 
-                              );
+                        <input
 
+                            type="text"
 
+                            placeholder="Search by title, company or skill"
 
-                    return matchesCompany && matchesSearch && matchesType && matchesLocation;
+                            value={search}
 
-          });
+                            onChange={event => setSearch(event.target.value)}
 
+                        />
 
 
-          const sortedOpportunities = [...filteredOpportunities].sort((a, b) => {
 
-                    if (sortBy === "company") {
+                        <select value={type}
 
-                              return String(a.company || "").localeCompare(String(b.company || ""));
+                            onChange={event => setType(event.target.value)}>
 
-                    }
+                            <option value="">All Types</option>
 
-                    if (sortBy === "title") {
+                            <option value="Job">Job</option>
 
-                              return String(a.title || "").localeCompare(String(b.title || ""));
+                            <option value="Internship">Internship</option>
 
-                    }
+                        </select>
 
-                    return 0;
 
-          });
 
+                        <input
 
+                            type="text"
 
-          const clearFilters = () => {
+                            placeholder="Enter location"
 
-                    setSearch("");
+                            value={locationFilter}
 
-                    setType("");
+                            onChange={event => setLocationFilter(event.target.value)}
 
-                    setLocationFilter("");
+                        />
 
-                    setSortBy("");
 
-                    navigate("/opportunities", { replace: true, state: {} });
 
-          };
+                        <select value={sortBy}
 
+                            onChange={event => setSortBy(event.target.value)}>
 
+                            <option value="">Sort By</option>
 
-          return (
+                            <option value="company">Company</option>
 
-                    <div className="opportunities-container">
+                            <option value="title">Title</option>
 
-                              {!selectedCompany && (
+                        </select>
 
-                                        <>
 
-                                                  <h1>OPPORTUNITIES</h1>
 
+                        <button onClick={clearFilters}><FilterX size={18} />Clear Filters</button>
 
+                    </div>
 
-                                                  <div className="filters">
+                </>
 
-                                                            <input
+            )}
 
-                                                                      type="text"
 
-                                                                      placeholder="Search by title, company or skill"
 
-                                                                      value={search}
+            <div className="opportunity-cards">
 
-                                                                      onChange={event => setSearch(event.target.value)}
+                {sortedOpportunities.length > 0 ? (
 
-                                                            />
+                    sortedOpportunities.map(opportunity => (
 
+                        <div className="opportunity-card" key={opportunity.id}>
 
+                            <h2>{opportunity.company}</h2>
 
-                                                            <select value={type}
-
-                                                                      onChange={event => setType(event.target.value)}>
-
-                                                                      <option value="">All Types</option>
-
-                                                                      <option value="Job">Job</option>
-
-                                                                      <option value="Internship">Internship</option>
-
-                                                            </select>
-
-
-
-                                                            <input
-
-                                                                      type="text"
-
-                                                                      placeholder="Enter location"
-
-                                                                      value={locationFilter}
-
-                                                                      onChange={event => setLocationFilter(event.target.value)}
-
-                                                            />
-
-
-
-                                                            <select value={sortBy}
-
-                                                                      onChange={event => setSortBy(event.target.value)}>
-
-                                                                      <option value="">Sort By</option>
-
-                                                                      <option value="company">Company</option>
-
-                                                                      <option value="title">Title</option>
-
-                                                            </select>
-
-
-
-                                                            <button onClick={clearFilters}><FilterX size={18} />Clear Filters</button>
-
-                                                  </div>
-
-                                        </>
-
-                              )}
-
-
-
-                              <div className="opportunity-cards">
-
-                                        {sortedOpportunities.length > 0 ? (
-
-                                                  sortedOpportunities.map(opportunity => (
-
-                                                            <div className="opportunity-card" key={opportunity.id}>
-
-                                                                      <h2>{opportunity.company}</h2>
-
-                                                                      <h2>{opportunity.title}</h2>
-                                                                      <p><strong>Location:</strong> {opportunity.location || "Not specified"}</p>
-                                                                      <p><strong>Type:</strong> {opportunity.type || "Not specified"}</p>
+                            <h2>{opportunity.title}</h2>
+                            <p><strong>Location:</strong> {opportunity.location || "Not specified"}</p>
+                            <p><strong>Type:</strong> {opportunity.type || "Not specified"}</p>
                             <p>
                                 <strong>Salary / Stipend:</strong>{" "}
                                 {opportunity.salaryStipend || "Not specified"}
                             </p>
 
-                                                                      <p>
+                            <p>
 
-                                                                                <strong>Skills:</strong>{" "}
+                                <strong>Skills:</strong>{" "}
 
-                                                                                {Array.isArray(opportunity.skills)
+                                {Array.isArray(opportunity.skills)
 
-                                                                                          ? opportunity.skills.join(", ")
+                                    ? opportunity.skills.join(", ")
 
-                                                                                          : opportunity.skills || "Not specified"}
+                                    : opportunity.skills || "Not specified"}
 
-                                                                      </p>
+                            </p>
 
-                                                                      <p><strong>Deadline:</strong> {opportunity.deadline || "Not specified"}</p>
+                            <p><strong>Deadline:</strong> {opportunity.deadline || "Not specified"}</p>
 
 
-<div className="opportunity-actions">
-                                                                      <button onClick={() =>
-
-                                                                                navigate("/opportunity-details", {
-
-                                                                                          state: {
-
-                                                                                                    from: "opportunities",
-
-                                                                                                    opportunity
-
-                                                                                          }
-
-                                                                                })
-
-                                                                      }>
-
-                                                                                <ArrowRight size={18} />View Details
-
-                                                                      </button>
-                                                                     <button
-    className="share-opportunity-button"
-    onClick={() => handleShare(opportunity)}
->
-    <Share2 size={18} /> Share
-</button>
+                            <div className="opportunity-actions">
+                                <button
+                                    className="view-details-button"
+                                    onClick={() =>
+                                        navigate("/opportunity-details", {
+                                            state: {
+                                                from: "opportunities",
+                                                opportunity
+                                            }
+                                        })
+                                    }
+                                >
+                                    <ArrowRight size={18} />
+                                    View Details
+                                </button>
 
 
 
-                                                                      {localStorage.getItem("isLoggedIn") === "true" &&
 
-                                                                                localStorage.getItem("userRole") === "student" && (
+                                {localStorage.getItem("isLoggedIn") === "true" &&
 
-                                                                                          <button
-    className="save-opportunity-button"
-    onClick={() => handleSave(opportunity)}
->
-    <Bookmark size={18} /> Save Opportunity
-</button>
+                                    localStorage.getItem("userRole") === "student" && (
 
-                                                                                )}
+                                        <button
+                                            className="save-opportunity-button"
+                                            onClick={() => handleSave(opportunity)}
+                                        >
+                                            <Bookmark size={18} /> Save Opportunity
+                                        </button>
+
+                                    )}
 
 
 
-                                                                      {selectedCompany && (
+                                {selectedCompany && (
 
-                                                                                <button onClick={() => navigate("/")}>
+                                    <button onClick={() => navigate("/")}>
 
-                                                                                          <House size={18} />Back to Home
+                                        <House size={18} />Back to Home
 
-                                                                                </button>
+                                    </button>
 
-                                                                      )}
-</div>
-                                                            </div>
+                                )}
+                            </div>
+                        </div>
 
-                                                  ))
+                    ))
 
-                                        ) : (
+                ) : (
 
-                                                  <p>
+                    <p className="no-opportunities-message">
 
-                                                            {allOpportunities.length === 0
+                        {allOpportunities.length === 0
 
-                                                                      ? "No published opportunities available yet. Please check again later."
+                            ? "No published opportunities available yet. Please check again later."
 
-                                                                      : "No opportunities match your search or filters."}
+                            : "No opportunities match your search or filters."}
 
-                                                  </p>
+                    </p>
 
-                                        )}
+                )}
 
-                              </div>
+            </div>
 
-                    </div>
+        </div>
 
-          );
+    );
 
 }
-
 
 
 export default Opportunities;

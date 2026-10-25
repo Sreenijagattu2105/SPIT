@@ -1,91 +1,144 @@
 
 import { useEffect, useState } from "react";
 import { Trash2, CheckCheck, Check } from "lucide-react";
-const STORAGE_KEY = "coordinatorNotifications";
 
-function readNotifications() {
-    try {
-        const data = JSON.parse(
-            localStorage.getItem(STORAGE_KEY) || "[]"
-        );
-
-        return Array.isArray(data) ? data : [];
-    } catch {
-        return [];
-    }
-}
+const NOTIFICATIONS_API =
+    "http://localhost:8080/spit-backend/api/coordinator/notifications";
 
 function CoordinatorNotifications() {
-    const [notifications, setNotifications] = useState(
-        readNotifications
-    );
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    // Load notifications from Spring MVC
+    const loadNotifications = async () => {
+        try {
+            setError("");
+
+            const response = await fetch(NOTIFICATIONS_API, {
+                method: "GET",
+                credentials: "include",
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    "Unable to load notifications. Please log in again if your session has expired."
+                );
+            }
+
+            const data = await response.json();
+
+            setNotifications(
+                Array.isArray(data.notifications)
+                    ? data.notifications
+                    : []
+            );
+
+            setUnreadCount(data.unreadCount ?? 0);
+        } catch (error) {
+            console.error("Notification loading error:", error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const handleStorageChange = () => {
-            setNotifications(readNotifications());
-        };
-
-        window.addEventListener("storage", handleStorageChange);
-        window.addEventListener(
-            "coordinatorNotificationsChange",
-            handleStorageChange
-        );
-
-        return () => {
-            window.removeEventListener(
-                "storage",
-                handleStorageChange
-            );
-            window.removeEventListener(
-                "coordinatorNotificationsChange",
-                handleStorageChange
-            );
-        };
+        loadNotifications();
     }, []);
 
-    const saveNotifications = (updatedNotifications) => {
-        setNotifications(updatedNotifications);
+    // Mark one notification as read
+    const markAsRead = async (id) => {
+        try {
+            const response = await fetch(
+                `${NOTIFICATIONS_API}/${id}/read`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                }
+            );
 
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(updatedNotifications)
-        );
+            if (!response.ok) {
+                throw new Error("Unable to mark notification as read.");
+            }
 
-        window.dispatchEvent(
-            new Event("coordinatorNotificationsChange")
-        );
+            await loadNotifications();
+            window.dispatchEvent(
+                new Event("coordinatorNotificationsChange")
+            );
+        } catch (error) {
+            console.error("Mark-as-read error:", error);
+            alert(error.message);
+        }
     };
 
-    const markAsRead = (id) => {
-        saveNotifications(
-            notifications.map((notification) =>
-                notification.id === id
-                    ? { ...notification, read: true }
-                    : notification
-            )
-        );
+    // Mark all notifications as read
+    const markAllAsRead = async () => {
+        try {
+            const response = await fetch(
+                `${NOTIFICATIONS_API}/read-all`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Unable to mark all notifications as read.");
+            }
+
+            await loadNotifications();
+            window.dispatchEvent(
+                new Event("coordinatorNotificationsChange")
+            );
+        } catch (error) {
+            console.error("Mark-all-as-read error:", error);
+            alert(error.message);
+        }
     };
 
-    const markAllAsRead = () => {
-        saveNotifications(
-            notifications.map((notification) => ({
-                ...notification,
-                read: true
-            }))
-        );
+    // Delete one notification
+    const handleDelete = async (id) => {
+        try {
+            const response = await fetch(
+                `${NOTIFICATIONS_API}/${id}`,
+                {
+                    method: "DELETE",
+                    credentials: "include",
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Unable to delete notification.");
+            }
+
+            await loadNotifications();
+
+            // Notify other coordinator components that notifications changed.
+            window.dispatchEvent(
+                new Event("coordinatorNotificationsChange")
+            );
+        } catch (error) {
+            console.error("Notification deletion error:", error);
+            alert(error.message);
+        }
     };
 
-    const handleDelete = (id) => {
-        saveNotifications(
-            notifications.filter(
-                (notification) => notification.id !== id
-            )
-        );
-    };
+    // Format the timestamp returned by the backend
+    const formatDate = (dateValue) => {
+        if (!dateValue) {
+            return "Date unavailable";
+        }
 
-    const unreadCount = notifications.filter(
-        (notification) => notification.read !== true
-    ).length;
+        const date = new Date(dateValue);
+
+        if (Number.isNaN(date.getTime())) {
+            return "Date unavailable";
+        }
+
+        return date.toLocaleString();
+    };
 
     return (
         <div className="notifications-page">
@@ -96,78 +149,96 @@ function CoordinatorNotifications() {
                     Stay updated on applications, opportunities,
                     and placement activities.
                 </p>
-<div className="unread-notifications-box">
-                <p>
-                    <strong>Unread notifications:</strong>{" "}
-                    {unreadCount}
-                </p>
 
-                {unreadCount > 0 && (
-                    <button
-                        type="button"
-                        className="mark-all-read-button"
-                        onClick={markAllAsRead}
-                    >
-                     <CheckCheck size={18} />     Mark All as Read
-                    </button>
-                )}
-</div>
-                <div className="notifications-list">
-                    {notifications.length === 0 ? (
-                        <div className="notification-empty">
-                            <h2>No Notifications</h2>
-                            <p>
-                                You don't have any coordinator
-                                notifications right now.
-                            </p>
-                        </div>
-                    ) : (
-                        notifications.map((notification) => (
-                            <div
-                                key={notification.id}
-                                className={`notification-card ${
-                                    notification.read
-                                        ? "read"
-                                        : "unread"
-                                }`}
-                            >
-                                <div>
-                                    <h3>{notification.message}</h3>
-                                    <p>
-                                        {notification.date ||
-                                            "Date unavailable"}
-                                    </p>
-                                </div>
+                <div className="unread-notifications-box">
+                    <p>
+                        <strong>Unread notifications:</strong>{" "}
+                        {unreadCount}
+                    </p>
 
-                                <div className="notification-actions">
-                                    {!notification.read && (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                markAsRead(
-                                                    notification.id
-                                                )
-                                            }
-                                        >
-                                           <Check size={18} />   
-                                        </button>
-                                    )}
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleDelete(
-                                                notification.id
-                                            )
-                                        }
-                                    >
-                                      <Trash2 size={18} />      
-                                    </button>
-                                </div>
-                            </div>
-                        ))
+                    {unreadCount > 0 && (
+                        <button
+                            type="button"
+                            className="mark-all-read-button"
+                            onClick={markAllAsRead}
+                        >
+                            <CheckCheck size={18} />
+                            Mark All as Read
+                        </button>
                     )}
                 </div>
+
+                {loading ? (
+                    <p>Loading notifications...</p>
+                ) : error ? (
+                    <div className="notification-empty">
+                        <h2>Unable to Load Notifications</h2>
+                        <p>{error}</p>
+                        <button
+                            type="button"
+                            onClick={loadNotifications}
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                ) : (
+                    <div className="notifications-list">
+                        {notifications.length === 0 ? (
+                            <div className="notification-empty">
+                                <h2>No Notifications</h2>
+                                <p>
+                                    You don't have any coordinator
+                                    notifications right now.
+                                </p>
+                            </div>
+                        ) : (
+                            notifications.map((notification) => (
+                                <div
+                                    key={notification.id}
+                                    className={`notification-card ${notification.read
+                                        ? "read"
+                                        : "unread"
+                                        }`}
+                                >
+                                    <div>
+                                        <h3>{notification.message}</h3>
+                                        <p>
+                                            {formatDate(
+                                                notification.createdAt
+                                            )}
+                                        </p>
+                                    </div>
+
+                                    <div className="notification-actions">
+                                        {!notification.read && (
+                                            <button
+                                                type="button"
+                                                title="Mark as read"
+                                                aria-label="Mark notification as read"
+                                                onClick={() =>
+                                                    markAsRead(notification.id)
+                                                }
+                                            >
+                                                <Check size={18} />
+                                            </button>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            title="Delete notification"
+                                            aria-label="Delete notification"
+                                            onClick={() =>
+                                                handleDelete(notification.id)
+                                            }
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

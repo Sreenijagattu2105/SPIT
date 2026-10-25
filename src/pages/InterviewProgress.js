@@ -1,15 +1,88 @@
 import {
-    Pencil,
-    Save,
-    X,
-    Plus,
-    Trash2
+  Pencil,
+  Save,
+  X,
+  Plus,
+  Trash2
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const APPLICATIONS_KEY = "startedApplications";
 const PROGRESS_KEY = "interviewProgress";
+
+
+function addCoordinatorNotification(notification, preferenceKey) {
+  try {
+    let preferences = {};
+
+    try {
+      preferences = JSON.parse(
+        localStorage.getItem(
+          "coordinatorNotificationPreferences"
+        ) || "{}"
+      ) || {};
+    } catch {
+      preferences = {};
+    }
+
+    // Do not create a notification when its preference is disabled.
+    // If no preference has been saved, keep notifications enabled.
+    if (preferences[preferenceKey] === false) {
+      return;
+    }
+
+    const stored = JSON.parse(
+      localStorage.getItem("coordinatorNotifications") || "[]"
+    );
+
+    const notifications = Array.isArray(stored) ? stored : [];
+
+    localStorage.setItem(
+      "coordinatorNotifications",
+      JSON.stringify([notification, ...notifications])
+    );
+
+    window.dispatchEvent(
+      new Event("coordinatorNotificationsChange")
+    );
+  } catch (error) {
+    console.error(
+      "Could not save coordinator notification:",
+      error
+    );
+  }
+}
+
+
+function getCurrentStudentEmail() {
+  try {
+    const user = JSON.parse(
+      localStorage.getItem("currentUser") || "null"
+    );
+
+    return String(user?.email || "").trim().toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function getCurrentStudentName() {
+  try {
+    const user = JSON.parse(
+      localStorage.getItem("currentUser") || "null"
+    );
+
+    return (
+      user?.name ||
+      user?.fullName ||
+      user?.studentName ||
+      "Student"
+    );
+  } catch {
+    return "Student";
+  }
+}
 
 const ROUND_OPTIONS = [
   "Online Assessment",
@@ -21,8 +94,20 @@ const ROUND_OPTIONS = [
   "Other"
 ];
 
+const OVERALL_STATUSES = [
+  "Applied",
+  "In Progress",
+  "Shortlisted",
+  "Selected",
+  "Rejected",
+  "Withdrawn"
+];
+
 const ROUND_STATUSES = [
   "Upcoming",
+  "Scheduled",
+  "In Progress",
+  "Shortlisted",
   "Completed",
   "Cleared",
   "Not Cleared",
@@ -30,27 +115,60 @@ const ROUND_STATUSES = [
   "Cancelled"
 ];
 
-const OVERALL_STATUSES = [
-  "Applied",
-  "In Progress",
-  "Selected",
-  "Rejected",
-  "Withdrawn"
-];
+const FINAL_STATUSES = ["Selected", "Rejected", "Withdrawn"];
+
+function getAvailableOverallStatuses(currentStatus) {
+  const currentIndex = OVERALL_STATUSES.indexOf(currentStatus);
+
+  if (FINAL_STATUSES.includes(currentStatus)) {
+    return [currentStatus];
+  }
+
+  return OVERALL_STATUSES.filter((status, index) => {
+    return index >= currentIndex || status === "Withdrawn";
+  });
+}
+
 
 function readArray(key) {
   try {
-    const data = JSON.parse(localStorage.getItem(key) || "[]");
-    return Array.isArray(data) ? data : [];
+    const data = JSON.parse(
+      localStorage.getItem(key) || "[]"
+    );
+
+    if (!Array.isArray(data)) return [];
+
+    const email = getCurrentStudentEmail();
+
+    if (!email) return [];
+
+    // Interview progress records belong to individual students.
+    if (key === PROGRESS_KEY) {
+      return data.filter(
+        item =>
+          String(item.studentEmail || "")
+            .trim()
+            .toLowerCase() === email
+      );
+    }
+
+    // Show only the logged-in student's applications.
+    return data.filter(
+      application =>
+        String(application.studentEmail || "")
+          .trim()
+          .toLowerCase() === email
+    );
   } catch {
     return [];
   }
 }
 
+
 function getApplicationKey(application) {
   return String(
     application.applicationId ||
-      `${application.studentEmail || ""}_${application.id || ""}_${application.company || ""}_${application.title || ""}`
+    `${application.studentEmail || ""}_${application.id || ""}_${application.company || ""}_${application.title || ""}`
   );
 }
 
@@ -70,7 +188,7 @@ function InterviewProgress() {
   const [roundName, setRoundName] = useState("Online Assessment");
   const [customRound, setCustomRound] = useState("");
   const [roundDate, setRoundDate] = useState("");
-  const [roundStatus, setRoundStatus] = useState("Upcoming");
+
   const [roundNotes, setRoundNotes] = useState("");
 
   const [editingNotes, setEditingNotes] = useState({});
@@ -78,20 +196,134 @@ function InterviewProgress() {
   const [editingOverallStatus, setEditingOverallStatus] = useState(false);
   const [draftOverallStatus, setDraftOverallStatus] = useState("Applied");
 
+
+
   useEffect(() => {
-    function reloadData() {
-      setApplications(readArray(APPLICATIONS_KEY));
-      setProgress(readArray(PROGRESS_KEY));
+    let active = true;
+
+    async function reloadData() {
+      try {
+        const [applicationsResponse, roundsResponse] =
+          await Promise.all([
+            fetch(
+              "http://localhost:8080/spit-backend/api/student/applications",
+              { credentials: "include" }
+            ),
+            fetch(
+              "http://localhost:8080/spit-backend/api/student/interview-progress",
+              { credentials: "include" }
+            )
+          ]);
+
+        const applicationsData = await applicationsResponse.json();
+        const roundsData = await roundsResponse.json();
+
+        if (!applicationsResponse.ok) {
+          throw new Error(
+            applicationsData.message ||
+            "Unable to load applications."
+          );
+        }
+
+        if (!roundsResponse.ok) {
+          throw new Error(
+            roundsData.message ||
+            "Unable to load interview rounds."
+          );
+        }
+
+        if (!active) return;
+
+        const loadedApplications = applicationsData.map(item => ({
+          ...item,
+          id: item.id ?? item.opportunityId ?? item.opportunity_id,
+          applicationId:
+            item.applicationId ?? item.application_id,
+          company: item.company ?? item.company_name ?? "",
+          studentEmail: getCurrentStudentEmail(),
+          type:
+            String(item.type ?? "").toUpperCase() === "JOB"
+              ? "Job"
+              : "Internship",
+          appliedDate: item.appliedAt
+            ? new Date(item.appliedAt).toLocaleDateString(
+              "en-GB",
+              {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+              }
+            )
+            : "Not recorded"
+        }));
+
+        const loadedProgress = loadedApplications.map(application => {
+          const applicationRounds = roundsData
+            .filter(
+              round =>
+                String(round.applicationId) ===
+                String(application.applicationId)
+            )
+            .map(round => ({
+              id: round.roundId,
+              name: round.name,
+              date: round.scheduledAt
+                ? String(round.scheduledAt).slice(0, 10)
+                : "",
+              status: String(round.status || "UPCOMING")
+                .toLowerCase()
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, letter =>
+                  letter.toUpperCase()
+                ),
+              notes: round.notes || ""
+            }));
+
+          const statusMap = {
+            APPLIED: "Applied",
+            IN_PROGRESS: "In Progress",
+            SHORTLISTED: "Shortlisted",
+            SELECTED: "Selected",
+            REJECTED: "Rejected",
+            WITHDRAWN: "Withdrawn"
+          };
+
+          const rawStatus = String(
+            application.status || "APPLIED"
+          ).toUpperCase();
+
+          return {
+            studentEmail: getCurrentStudentEmail(),
+            applicationKey: getApplicationKey(application),
+            applicationId: application.applicationId,
+            company: application.company,
+            title: application.title || "Untitled Opportunity",
+            overallStatus: statusMap[rawStatus] || "Applied",
+            rounds: applicationRounds
+          };
+        });
+
+        setApplications(loadedApplications);
+        setProgress(loadedProgress);
+      } catch (error) {
+        console.error(
+          "Unable to load Interview Progress:",
+          error
+        );
+      }
     }
 
-    window.addEventListener("storage", reloadData);
+    reloadData();
+
     window.addEventListener("dashboardDataUpdated", reloadData);
 
     return () => {
-      window.removeEventListener("storage", reloadData);
+      active = false;
       window.removeEventListener("dashboardDataUpdated", reloadData);
     };
   }, []);
+
+
 
   const selectedApplication = applications.find(
     (application) => getApplicationKey(application) === selectedKey
@@ -128,7 +360,8 @@ function InterviewProgress() {
     }
   }
 
-  function addRound(event) {
+
+  async function addRound(event) {
     event.preventDefault();
 
     if (!selectedApplication) {
@@ -144,44 +377,68 @@ function InterviewProgress() {
       return;
     }
 
-    const existing = progress.find(
-      (item) => item.applicationKey === selectedKey
-    );
+    if (!selectedApplication.applicationId) {
+      showMessage("Application ID is missing. Please reload the page.");
+      return;
+    }
 
-    const newRound = {
-      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      name: finalRoundName,
-      date: roundDate,
-      status: roundStatus,
-      notes: roundNotes.trim()
-    };
+    try {
+      const response = await fetch(
+        "http://localhost:8080/spit-backend/api/student/interview-progress",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            applicationId: selectedApplication.applicationId,
+            name: finalRoundName,
+            date: roundDate || null,
+            status: "UPCOMING",
+            notes: roundNotes.trim()
+          })
+        }
+      );
 
-    const updatedItem = {
-      applicationKey: selectedKey,
-      applicationId: selectedApplication.id ?? null,
-      company: selectedApplication.company || "Company not specified",
-      title: selectedApplication.title || "Untitled Opportunity",
-      overallStatus: existing?.overallStatus || "In Progress",
-      rounds: [...(existing?.rounds || []), newRound],
-      updatedAt: new Date().toISOString()
-    };
+      const result = await response.json();
 
-    const updatedProgress = existing
-      ? progress.map((item) =>
-          item.applicationKey === selectedKey ? updatedItem : item
-        )
-      : [...progress, updatedItem];
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Unable to add interview round."
+        );
+      }
 
-    if (!saveProgress(updatedProgress)) return;
+      const date = new Date().toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      });
 
-    setRoundName("Online Assessment");
-    setCustomRound("");
-    setRoundDate("");
-    setRoundStatus("Upcoming");
-    setRoundNotes("");
+      addCoordinatorNotification({
+        id: Date.now(),
+        message: `${getCurrentStudentName()} (${getCurrentStudentEmail()}) added a ${finalRoundName} interview round for ${selectedApplication.title || "an opportunity"} at ${selectedApplication.company || "the company"}.`,
+        date,
+        read: false,
+        type: "interview-round-added",
+        studentEmail: getCurrentStudentEmail(),
+        opportunityId: selectedApplication.id ?? null
+      }, "interviewRoundAdded");
 
-    showMessage("Interview round added successfully.");
+      setRoundName("Online Assessment");
+      setCustomRound("");
+      setRoundDate("");
+      setRoundNotes("");
+
+      window.dispatchEvent(new Event("dashboardDataUpdated"));
+      showMessage("Interview round added successfully.");
+
+    } catch (error) {
+      console.error("Unable to add interview round:", error);
+      showMessage(error.message || "Unable to add interview round.");
+    }
   }
+
 
   function startStatusEdit(round) {
     setEditingStatus((previous) => ({
@@ -190,7 +447,8 @@ function InterviewProgress() {
     }));
   }
 
-  function saveRoundStatus(roundId) {
+
+  async function saveRoundStatus(roundId) {
     const newStatus = editingStatus[roundId];
 
     if (!newStatus) {
@@ -198,30 +456,111 @@ function InterviewProgress() {
       return;
     }
 
-    const updatedProgress = progress.map((item) => {
-      if (item.applicationKey !== selectedKey) return item;
+    const application = selectedApplication;
+    if (!application) return;
 
-      return {
-        ...item,
-        rounds: item.rounds.map((round) =>
-          round.id === roundId
-            ? { ...round, status: newStatus }
-            : round
-        ),
-        updatedAt: new Date().toISOString()
-      };
-    });
+    const currentProgress = progress.find(
+      item => item.applicationKey === selectedKey
+    );
 
-    if (!saveProgress(updatedProgress)) return;
+    const previousRound = currentProgress?.rounds?.find(
+      round => String(round.id) === String(roundId)
+    );
 
-    setEditingStatus((previous) => {
-      const next = { ...previous };
-      delete next[roundId];
-      return next;
-    });
+    if (!previousRound) {
+      showMessage("Interview round not found. Please reload the page.");
+      return;
+    }
 
-    showMessage("Interview round status updated successfully.");
+    const previousStatus = previousRound.status || "Upcoming";
+
+    const previousIndex = ROUND_STATUSES.indexOf(previousStatus);
+    const newIndex = ROUND_STATUSES.indexOf(newStatus);
+
+    if (
+      previousIndex !== -1 &&
+      newIndex !== -1 &&
+      newIndex < previousIndex
+    ) {
+      showMessage("You cannot move a round back to an earlier status.");
+      return;
+    }
+
+    if (previousStatus === newStatus) {
+      cancelStatusEdit(roundId);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/spit-backend/api/student/interview-progress/${roundId}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            status: newStatus.toUpperCase().replace(/\s+/g, "_")
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Unable to update interview round status."
+        );
+      }
+
+      const updatedProgress = progress.map(item => {
+        if (item.applicationKey !== selectedKey) return item;
+
+        return {
+          ...item,
+          rounds: item.rounds.map(round =>
+            String(round.id) === String(roundId)
+              ? { ...round, status: newStatus }
+              : round
+          ),
+          updatedAt: new Date().toISOString()
+        };
+      });
+
+      setProgress(updatedProgress);
+
+      const date = new Date().toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      });
+
+      addCoordinatorNotification({
+        id: Date.now(),
+        message: `${getCurrentStudentName()} (${getCurrentStudentEmail()}) updated the ${previousRound.name} round status for ${application.title || "an opportunity"} at ${application.company || "the company"} from "${previousStatus}" to "${newStatus}".`,
+        date,
+        read: false,
+        type: "interview-round-status-update",
+        studentEmail: getCurrentStudentEmail(),
+        opportunityId: application.id ?? null
+      }, "interviewRoundStatusUpdated");
+
+      setEditingStatus(previous => {
+        const next = { ...previous };
+        delete next[roundId];
+        return next;
+      });
+
+      showMessage("Interview round status updated successfully.");
+    } catch (error) {
+      console.error("Could not update interview round status:", error);
+      showMessage(
+        error.message || "Unable to update interview round status."
+      );
+    }
   }
+
 
   function cancelStatusEdit(roundId) {
     setEditingStatus((previous) => {
@@ -238,33 +577,78 @@ function InterviewProgress() {
     }));
   }
 
-  function saveRoundNotes(roundId) {
+
+  async function saveRoundNotes(roundId) {
     const notes = editingNotes[roundId];
 
-    const updatedProgress = progress.map((item) => {
-      if (item.applicationKey !== selectedKey) return item;
+    const currentProgress = progress.find(
+      item => item.applicationKey === selectedKey
+    );
 
-      return {
-        ...item,
-        rounds: item.rounds.map((round) =>
-          round.id === roundId
-            ? { ...round, notes: notes ?? round.notes ?? "" }
-            : round
-        ),
-        updatedAt: new Date().toISOString()
-      };
-    });
+    const existingRound = currentProgress?.rounds?.find(
+      round => String(round.id) === String(roundId)
+    );
 
-    if (!saveProgress(updatedProgress)) return;
+    if (!existingRound) {
+      showMessage("Interview round not found. Please reload the page.");
+      return;
+    }
 
-    setEditingNotes((previous) => {
-      const next = { ...previous };
-      delete next[roundId];
-      return next;
-    });
+    try {
+      const response = await fetch(
+        `http://localhost:8080/spit-backend/api/student/interview-progress/${roundId}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            notes: notes ?? existingRound.notes ?? ""
+          })
+        }
+      );
 
-    showMessage("Notes saved successfully.");
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Unable to save interview notes."
+        );
+      }
+
+      const updatedProgress = progress.map(item => {
+        if (item.applicationKey !== selectedKey) return item;
+
+        return {
+          ...item,
+          rounds: item.rounds.map(round =>
+            String(round.id) === String(roundId)
+              ? {
+                ...round,
+                notes: notes ?? round.notes ?? ""
+              }
+              : round
+          ),
+          updatedAt: new Date().toISOString()
+        };
+      });
+
+      setProgress(updatedProgress);
+
+      setEditingNotes(previous => {
+        const next = { ...previous };
+        delete next[roundId];
+        return next;
+      });
+
+      showMessage("Notes saved successfully.");
+    } catch (error) {
+      console.error("Could not save interview notes:", error);
+      showMessage(error.message || "Unable to save interview notes.");
+    }
   }
+
 
   function cancelNotesEdit(roundId) {
     setEditingNotes((previous) => {
@@ -274,38 +658,64 @@ function InterviewProgress() {
     });
   }
 
-  function removeRound(roundId) {
+
+  async function removeRound(roundId) {
     const confirmed = window.confirm(
       "Are you sure you want to remove this interview round?"
     );
 
     if (!confirmed) return;
 
-    const updatedProgress = progress.map((item) => {
-      if (item.applicationKey !== selectedKey) return item;
+    try {
+      const response = await fetch(
+        `http://localhost:8080/spit-backend/api/student/interview-progress/${roundId}`,
+        {
+          method: "DELETE",
+          credentials: "include"
+        }
+      );
 
-      return {
-        ...item,
-        rounds: item.rounds.filter((round) => round.id !== roundId),
-        updatedAt: new Date().toISOString()
-      };
-    });
+      const result = await response.json();
 
-    if (!saveProgress(updatedProgress)) return;
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Unable to remove interview round."
+        );
+      }
 
-    setEditingNotes((previous) => {
-      const next = { ...previous };
-      delete next[roundId];
-      return next;
-    });
+      const updatedProgress = progress.map(item => {
+        if (item.applicationKey !== selectedKey) return item;
 
-    setEditingStatus((previous) => {
-      const next = { ...previous };
-      delete next[roundId];
-      return next;
-    });
+        return {
+          ...item,
+          rounds: item.rounds.filter(
+            round => String(round.id) !== String(roundId)
+          ),
+          updatedAt: new Date().toISOString()
+        };
+      });
 
-    showMessage("Interview round removed successfully.");
+      setProgress(updatedProgress);
+
+      setEditingNotes(previous => {
+        const next = { ...previous };
+        delete next[roundId];
+        return next;
+      });
+
+      setEditingStatus(previous => {
+        const next = { ...previous };
+        delete next[roundId];
+        return next;
+      });
+
+      showMessage("Interview round removed successfully.");
+    } catch (error) {
+      console.error("Could not remove interview round:", error);
+      showMessage(
+        error.message || "Unable to remove interview round."
+      );
+    }
   }
 
   function startOverallStatusEdit() {
@@ -315,34 +725,101 @@ function InterviewProgress() {
     setEditingOverallStatus(true);
   }
 
-  function saveOverallStatus() {
+
+  async function saveOverallStatus() {
     if (!selectedApplication) return;
 
     const existing = progress.find(
-      (item) => item.applicationKey === selectedKey
+      item => item.applicationKey === selectedKey
     );
 
-    const updatedItem = {
-      applicationKey: selectedKey,
-      applicationId: selectedApplication.id ?? null,
-      company: selectedApplication.company || "Company not specified",
-      title: selectedApplication.title || "Untitled Opportunity",
-      overallStatus: draftOverallStatus,
-      rounds: existing?.rounds || [],
-      updatedAt: new Date().toISOString()
+    const previousStatus = existing?.overallStatus || "Applied";
+
+    if (previousStatus === draftOverallStatus) {
+      setEditingOverallStatus(false);
+      return;
+    }
+
+    const availableStatuses = getAvailableOverallStatuses(previousStatus);
+
+    if (!availableStatuses.includes(draftOverallStatus)) {
+      showMessage(
+        "You cannot move an application back to an earlier status."
+      );
+      return;
+    }
+
+    // Use the database application ID, not the opportunity ID.
+    const applicationId = selectedApplication.applicationId;
+
+    if (!applicationId) {
+      showMessage("Application ID is missing. Please reload the page.");
+      return;
+    }
+
+    const statusMap = {
+      "Applied": "APPLIED",
+      "In Progress": "IN_PROGRESS",
+      "Shortlisted": "SHORTLISTED",
+      "Selected": "SELECTED",
+      "Rejected": "REJECTED",
+      "Withdrawn": "WITHDRAWN"
     };
 
-    const updatedProgress = existing
-      ? progress.map((item) =>
+    try {
+      const response = await fetch(
+        `http://localhost:8080/spit-backend/api/student/applications/${applicationId}/status`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            status: statusMap[draftOverallStatus]
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Failed to update application status."
+        );
+      }
+
+      const updatedItem = {
+        ...existing,
+        studentEmail: getCurrentStudentEmail(),
+        applicationKey: selectedKey,
+        applicationId,
+        company: selectedApplication.company || "Company not specified",
+        title: selectedApplication.title || "Untitled Opportunity",
+        overallStatus: draftOverallStatus,
+        rounds: existing?.rounds || [],
+        updatedAt: new Date().toISOString()
+      };
+
+      const updatedProgress = existing
+        ? progress.map(item =>
           item.applicationKey === selectedKey ? updatedItem : item
         )
-      : [...progress, updatedItem];
+        : [...progress, updatedItem];
 
-    if (!saveProgress(updatedProgress)) return;
+      setProgress(updatedProgress);
 
-    setEditingOverallStatus(false);
-    showMessage("Overall interview status updated successfully.");
+      setEditingOverallStatus(false);
+
+      window.dispatchEvent(new Event("dashboardDataUpdated"));
+
+      showMessage("Overall application status updated successfully.");
+    } catch (error) {
+      console.error("Could not update application status:", error);
+      showMessage(error.message || "Failed to update application status.");
+    }
   }
+
 
   function cancelOverallStatusEdit() {
     setDraftOverallStatus(
@@ -435,7 +912,9 @@ function InterviewProgress() {
                   </div>
 
                   <span className="interview-status-chip">
-                    {selectedProgress?.overallStatus || "Applied"}
+                    {selectedProgress?.overallStatus ||
+                      selectedApplication.status ||
+                      "Applied"}
                   </span>
                 </div>
 
@@ -455,11 +934,27 @@ function InterviewProgress() {
                           setDraftOverallStatus(event.target.value)
                         }
                       >
-                        {OVERALL_STATUSES.map((status) => (
-                          <option key={status} value={status}>
-                            {status}
-                          </option>
-                        ))}
+                        {OVERALL_STATUSES.map((status, index) => {
+                          const currentStatus =
+                            selectedProgress?.overallStatus ||
+                            selectedApplication.status ||
+                            "Applied";
+
+                          const currentIndex = OVERALL_STATUSES.indexOf(currentStatus);
+
+                          return (
+                            <option
+                              key={status}
+                              value={status}
+                              disabled={
+                                index < currentIndex &&
+                                status !== "Withdrawn"
+                              }
+                            >
+                              {status}
+                            </option>
+                          );
+                        })}
                       </select>
 
                       <div className="interview-note-actions">
@@ -467,7 +962,7 @@ function InterviewProgress() {
                           type="button"
                           onClick={saveOverallStatus}
                         >
-                           <Save size={18} /> Save Status
+                          <Save size={18} /> Save Status
                         </button>
 
                         <button
@@ -484,20 +979,28 @@ function InterviewProgress() {
                       <input
                         type="text"
                         value={
-                          selectedProgress?.overallStatus || "Applied"
+                          selectedProgress?.overallStatus ||
+                          selectedApplication.status ||
+                          "Applied"
                         }
                         disabled
                         readOnly
                       />
 
                       <div className="interview-note-actions">
-                        <button
-                          type="button"
-                          className="interview-secondary-button"
-                          onClick={startOverallStatusEdit}
-                        >
-                         <Pencil size={18} />  Edit Status
-                        </button>
+                        {!FINAL_STATUSES.includes(
+                          selectedProgress?.overallStatus ||
+                          selectedApplication.status ||
+                          "Applied"
+                        ) && (
+                            <button
+                              type="button"
+                              className="interview-secondary-button"
+                              onClick={startOverallStatusEdit}
+                            >
+                              <Pencil size={18} /> Edit Status
+                            </button>
+                          )}
                       </div>
                     </>
                   )}
@@ -562,22 +1065,7 @@ function InterviewProgress() {
                     />
                   </label>
 
-                  <label className="interview-field">
-                    <strong>Round Status</strong>
 
-                    <select
-                      value={roundStatus}
-                      onChange={(event) =>
-                        setRoundStatus(event.target.value)
-                      }
-                    >
-                      {ROUND_STATUSES.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
 
                   <label className="interview-field full-width">
                     <strong>Notes / Result</strong>
@@ -681,11 +1169,20 @@ function InterviewProgress() {
                                   }))
                                 }
                               >
-                                {ROUND_STATUSES.map((status) => (
-                                  <option key={status} value={status}>
-                                    {status}
-                                  </option>
-                                ))}
+                                {ROUND_STATUSES.map((status, index) => {
+                                  const currentStatus = round.status || "Upcoming";
+                                  const currentIndex = ROUND_STATUSES.indexOf(currentStatus);
+
+                                  return (
+                                    <option
+                                      key={status}
+                                      value={status}
+                                      disabled={index < currentIndex}
+                                    >
+                                      {status}
+                                    </option>
+                                  );
+                                })}
                               </select>
 
                               <div className="interview-note-actions">
@@ -707,7 +1204,7 @@ function InterviewProgress() {
                                         cancelStatusEdit(round.id)
                                       }
                                     >
-                                        <X size={18} />  Cancel
+                                      <X size={18} />  Cancel
                                     </button>
                                   </>
                                 ) : (
@@ -718,7 +1215,7 @@ function InterviewProgress() {
                                       startStatusEdit(round)
                                     }
                                   >
-                                   <Pencil size={18} />  Edit Status
+                                    <Pencil size={18} />  Edit Status
                                   </button>
                                 )}
                               </div>
@@ -754,8 +1251,8 @@ function InterviewProgress() {
                                         saveRoundNotes(round.id)
                                       }
                                     >
-                                             <Save size={18} />
- Save Notes
+                                      <Save size={18} />
+                                      Save Notes
                                     </button>
 
                                     <button
@@ -765,7 +1262,7 @@ function InterviewProgress() {
                                         cancelNotesEdit(round.id)
                                       }
                                     >
-                                     <X size={18} />   Cancel
+                                      <X size={18} />   Cancel
                                     </button>
                                   </>
                                 ) : (
@@ -776,7 +1273,7 @@ function InterviewProgress() {
                                       startNotesEdit(round)
                                     }
                                   >
-                                  <Pencil size={18} />   Edit Notes
+                                    <Pencil size={18} />   Edit Notes
                                   </button>
                                 )}
                               </div>
@@ -789,7 +1286,7 @@ function InterviewProgress() {
                                 className="interview-danger-button"
                                 onClick={() => removeRound(round.id)}
                               >
-                               <Trash2 size={18} /> 
+                                <Trash2 size={18} />
                               </button>
                             </div>
                           </div>
@@ -804,7 +1301,7 @@ function InterviewProgress() {
         </>
       )}
 
-      
+
     </div>
   );
 }

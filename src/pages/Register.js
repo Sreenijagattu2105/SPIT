@@ -2,11 +2,28 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserPlus, LogIn } from "lucide-react";
 
-function addCoordinatorNotification(notification) {
+
+function addCoordinatorNotification(notification, preferenceKey) {
     try {
+        let preferences = {};
+
+        try {
+            preferences = JSON.parse(
+                localStorage.getItem("coordinatorNotificationPreferences") || "{}"
+            ) || {};
+        } catch {
+            preferences = {};
+        }
+
+        // Do not create the notification if its preference is disabled.
+        if (preferences[preferenceKey] === false) {
+            return;
+        }
+
         const stored = JSON.parse(
             localStorage.getItem("coordinatorNotifications") || "[]"
         );
+
         const notifications = Array.isArray(stored) ? stored : [];
 
         localStorage.setItem(
@@ -22,6 +39,7 @@ function addCoordinatorNotification(notification) {
     }
 }
 
+
 function Register() {
     const navigate = useNavigate();
 
@@ -31,14 +49,14 @@ function Register() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    const handleRegister = (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
 
         const cleanName = name.trim();
         const cleanEmail = email.trim().toLowerCase();
         const cleanPhone = phone.trim();
 
-        const namePattern = /^[A-Za-z ]+$/;
+        const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phonePattern = /^[0-9]{10}$/;
 
@@ -47,8 +65,13 @@ function Register() {
             return;
         }
 
+        if (cleanName.length < 2 || cleanName.length > 50) {
+            alert("Name must be between 2 and 50 characters.");
+            return;
+        }
+
         if (!namePattern.test(cleanName)) {
-            alert("Name should contain only letters.");
+            alert("Name should contain only letters and single spaces between words.");
             return;
         }
 
@@ -62,8 +85,8 @@ function Register() {
             return;
         }
 
-        if (password.length < 6) {
-            alert("Password must contain at least 6 characters.");
+        if (password.length < 8) {
+            alert("Password must contain at least 8 characters.");
             return;
         }
 
@@ -84,69 +107,70 @@ function Register() {
             return;
         }
 
-        let students = [];
 
         try {
-            const savedStudents = JSON.parse(
-                localStorage.getItem("students") || "[]"
+            const response = await fetch(
+                "http://localhost:8080/spit-backend/api/auth/register",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        fullName: cleanName,
+                        email: cleanEmail,
+                        phone: cleanPhone,
+                        password: password
+                    })
+                }
             );
 
-            if (Array.isArray(savedStudents)) {
-                students = savedStudents;
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.message || "Registration failed.");
+                return;
             }
-        } catch {
-            students = [];
-        }
 
-        const oldRegisteredUser = (() => {
-            try {
-                return JSON.parse(
-                    localStorage.getItem("registeredUser") || "null"
-                );
-            } catch {
-                return null;
-            }
-        })();
+            const date = new Date().toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            });
 
-        const emailExists =
-            students.some(
-                (student) =>
-                    String(student.email || "").toLowerCase() === cleanEmail
-            ) ||
-            (
-                oldRegisteredUser &&
-                String(oldRegisteredUser.email || "").toLowerCase() === cleanEmail
-            );
+            addCoordinatorNotification({
+                id: Date.now(),
+                message: `New student registered: ${cleanName} (${cleanEmail}).`,
+                date,
+                read: false,
+                type: "student-registration",
+                studentEmail: cleanEmail
+            }, "registeredAccount");
 
-        if (emailExists) {
-            alert("This email is already registered. Please login.");
+            window.dispatchEvent(new Event("dashboardDataUpdated"));
+
+            alert("Registration successful! Please login.");
             navigate("/login");
-            return;
+
+            alert("Registration successful! Please login.");
+            navigate("/login");
+
+        } catch (error) {
+            console.error("Registration failed:", error);
+            alert(
+                "Unable to connect to the server. Please ensure the backend is running."
+            );
         }
 
-        const registeredStudent = {
-            id: Date.now(),
-            name: cleanName,
-            email: cleanEmail,
-            phone: cleanPhone,
-            password: password,
-            department: "",
-            cgpa: ""
-        };
+        return;
 
-        students.push(registeredStudent);
-
-        localStorage.setItem("students", JSON.stringify(students));
-        localStorage.setItem(
-            "registeredUser",
-            JSON.stringify(registeredStudent)
-        );
 
         const date = new Date().toLocaleDateString("en-GB", {
             day: "2-digit",
             month: "short",
             year: "numeric"
         });
+
 
         addCoordinatorNotification({
             id: Date.now() + 1,
@@ -155,7 +179,8 @@ function Register() {
             read: false,
             type: "student-registration",
             studentEmail: cleanEmail
-        });
+        }, "registeredAccount");
+
 
         window.dispatchEvent(new Event("dashboardDataUpdated"));
 
@@ -163,80 +188,83 @@ function Register() {
         navigate("/login");
     };
 
-   
-return (
-    <div className="register-page">
-        <div className="register-container">
-            <h1>REGISTRATION</h1>
 
-            <p>
-                Create your SPIT account to explore internships
-                and placement opportunities.
-            </p>
+    return (
+        <div className="register-page">
+            <div className="register-container">
+                <h1>REGISTRATION</h1>
 
-            <div className="register-form-box">
-                <form onSubmit={handleRegister}>
-                    <label>Full Name</label>
-                    <input
-                        type="text"
-                        placeholder="Enter your full name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                    />
+                <p>
+                    Create your SPIT account to explore internships
+                    and placement opportunities.
+                </p>
 
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
+                <div className="register-form-box">
+                    <form onSubmit={handleRegister}>
+                        <label>Full Name</label>
+                        <input
+                            type="text"
+                            name="name"
+                            placeholder="Enter your full name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            maxLength={50}
+                            minLength={2}
+                            required
+                        />
 
-                    <label>Phone Number</label>
-                    <input
-                        type="text"
-                        placeholder="Enter your 10-digit phone number"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        required
-                    />
+                        <label>Email</label>
+                        <input
+                            type="email"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
 
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        placeholder="Enter password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
+                        <label>Phone Number</label>
+                        <input
+                            type="text"
+                            placeholder="Enter your 10-digit phone number"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            required
+                        />
 
-                    <label>Confirm Password</label>
-                    <input
-                        type="password"
-                        placeholder="Confirm password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                    />
+                        <label>Password</label>
+                        <input
+                            type="password"
+                            placeholder="Enter password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
 
-                    <button type="submit"> <UserPlus size={18} /> Register</button>
-                </form>
+                        <label>Confirm Password</label>
+                        <input
+                            type="password"
+                            placeholder="Confirm password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                        />
+
+                        <button type="submit"> <UserPlus size={18} /> Register</button>
+                    </form>
+                </div>
+
+                <p>
+                    Already have an account?{" "}
+                    <button
+                        type="button"
+                        onClick={() => navigate("/login")}
+                    >
+                        <LogIn size={18} />    Login
+                    </button>
+                </p>
             </div>
-
-            <p>
-                Already have an account?{" "}
-                <button
-                    type="button"
-                    onClick={() => navigate("/login")}
-                >
-                  <LogIn size={18} />    Login
-                </button>
-            </p>
         </div>
-    </div>
-);
+    );
 
 }
 

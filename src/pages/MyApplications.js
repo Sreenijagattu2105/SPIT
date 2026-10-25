@@ -3,24 +3,49 @@ import { useNavigate } from "react-router-dom";
 import { ExternalLink, Trash2 } from "lucide-react";
 const STORAGE_KEY = "startedApplications";
 
-const STATUSES = [
-    "Applied",
-    "Under Review",
-    "Shortlisted",
-    "Selected",
-    "Rejected"
-];
+
+function getCurrentStudentEmail() {
+    try {
+        const user = JSON.parse(
+            localStorage.getItem("currentUser") || "null"
+        );
+
+        return String(user?.email || "").trim().toLowerCase();
+    } catch {
+        return "";
+    }
+}
 
 function readApplications() {
     try {
         const data = JSON.parse(
             localStorage.getItem(STORAGE_KEY) || "[]"
         );
-        return Array.isArray(data) ? data : [];
+
+        const email = getCurrentStudentEmail();
+
+        if (!Array.isArray(data) || !email) return [];
+
+        return data.filter(
+            application =>
+                String(application.studentEmail || "")
+                    .trim()
+                    .toLowerCase() === email
+        );
     } catch {
         return [];
     }
 }
+
+function getApplicationKey(application) {
+    return [
+        String(application.studentEmail || "").toLowerCase(),
+        String(application.id || ""),
+        String(application.company || ""),
+        String(application.title || "")
+    ].join("|");
+}
+
 
 function addCoordinatorNotification(notification) {
     try {
@@ -42,95 +67,242 @@ function addCoordinatorNotification(notification) {
     }
 }
 
+function readAllApplications() {
+    try {
+        const data = JSON.parse(
+            localStorage.getItem(STORAGE_KEY) || "[]"
+        );
+
+        return Array.isArray(data) ? data : [];
+    } catch {
+        return [];
+    }
+}
+
 function MyApplications() {
     const navigate = useNavigate();
-    const [applications, setApplications] = useState(readApplications);
+    const [applications, setApplications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState("");
+
 
     useEffect(() => {
-        function loadApplications() {
-            setApplications(readApplications());
+        let active = true;
+
+        async function loadApplications() {
+            try {
+                setLoadError("");
+
+                const response = await fetch(
+                    "http://localhost:8080/spit-backend/api/student/applications",
+                    {
+                        method: "GET",
+                        credentials: "include",
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message || "Unable to load applications."
+                    );
+                }
+
+                if (active) {
+                    const loadedApplications = data.map((item) => ({
+                        ...item,
+                        id: item.id ?? item.opportunity_id,
+                        applicationId: item.applicationId ?? item.application_id,
+                        company: item.company ?? item.company_name ?? "",
+                        type:
+                            String(item.type ?? "").toUpperCase() === "JOB"
+                                ? "Job"
+                                : "Internship",
+
+                        appliedDate: item.appliedAt
+                            ? new Date(item.appliedAt).toLocaleDateString(
+                                "en-GB",
+                                {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                }
+                            )
+                            : "Not recorded",
+                    }));
+
+                    setApplications(loadedApplications);
+                }
+            } catch (error) {
+                if (active) {
+                    setLoadError(error.message || "Unable to load applications.");
+                }
+            } finally {
+                if (active) {
+                    setLoading(false);
+                }
+            }
         }
 
-        window.addEventListener("storage", loadApplications);
-        window.addEventListener("dashboardDataUpdated", loadApplications);
+        loadApplications();
 
         return () => {
-            window.removeEventListener("storage", loadApplications);
-            window.removeEventListener(
-                "dashboardDataUpdated",
-                loadApplications
-            );
+            active = false;
         };
     }, []);
 
-    function handleStatusChange(index, newStatus) {
-        const application = applications[index];
-        if (!application) return;
 
-        const previousStatus = application.status || "Applied";
-        if (previousStatus === newStatus) return;
-
-        const updatedApplications = applications.map(
-            (item, applicationIndex) =>
-                applicationIndex === index
-                    ? { ...item, status: newStatus }
-                    : item
-        );
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(updatedApplications)
-        );
-        localStorage.setItem(
-            "applications",
-            JSON.stringify(updatedApplications)
-        );
-
-        setApplications(updatedApplications);
-
-        const date = new Date().toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-        });
-
-        addCoordinatorNotification({
-            id: Date.now(),
-            message: `${application.studentName || "A student"} updated the application status for ${application.title || "an opportunity"} at ${application.company || "the company"} from "${previousStatus}" to "${newStatus}".`,
-            date,
-            read: false,
-            type: "application-status-update",
-            opportunityId: application.id,
-            studentEmail: application.studentEmail || ""
-        });
-
-        window.dispatchEvent(new Event("dashboardDataUpdated"));
-        alert(`Application status updated to "${newStatus}" successfully!`);
-    }
-
-    function handleRemove(index) {
+    async function handleRemove(index) {
         const confirmed = window.confirm(
-            "Are you sure you want to remove this application from your list?"
+            "Are you sure you want to remove this application?"
         );
 
         if (!confirmed) return;
 
-        const updatedApplications = applications.filter(
-            (_, applicationIndex) => applicationIndex !== index
-        );
+        const application = applications[index];
+        if (!application) return;
 
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(updatedApplications)
-        );
-        localStorage.setItem(
-            "applications",
-            JSON.stringify(updatedApplications)
-        );
+        if (!application.applicationId) {
+            alert("Application ID is missing. Please refresh the page.");
+            return;
+        }
 
-        setApplications(updatedApplications);
-        window.dispatchEvent(new Event("dashboardDataUpdated"));
+        const email = getCurrentStudentEmail();
+
+        try {
+            const response = await fetch(
+                `http://localhost:8080/spit-backend/api/student/applications/${application.applicationId}`,
+                {
+                    method: "DELETE",
+                    credentials: "include"
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || "Failed to remove application."
+                );
+            }
+
+            // Remove the application from the visible list.
+            setApplications(previous =>
+                previous.filter(
+                    item =>
+                        String(item.applicationId) !==
+                        String(application.applicationId)
+                )
+            );
+
+
+
+            // Remove its related interview-progress record for this student.
+            try {
+                const storedProgress = JSON.parse(
+                    localStorage.getItem("interviewProgress") || "[]"
+                );
+
+                const allProgress = Array.isArray(storedProgress)
+                    ? storedProgress
+                    : [];
+
+                const updatedProgress = allProgress.filter(item => {
+                    const sameStudent =
+                        String(item.studentEmail || "")
+                            .trim()
+                            .toLowerCase() === email;
+
+                    const sameApplication =
+                        (
+                            item.applicationId != null &&
+                            String(item.applicationId) === String(application.id)
+                        ) ||
+                        (
+                            item.applicationKey ===
+                            [
+                                email,
+                                String(application.id || ""),
+                                String(application.company || ""),
+                                String(application.title || "")
+                            ].join("|")
+                        );
+
+                    return !(sameStudent && sameApplication);
+                });
+
+                localStorage.setItem(
+                    "interviewProgress",
+                    JSON.stringify(updatedProgress)
+                );
+            } catch (error) {
+                console.error(
+                    "Could not remove related interview progress:",
+                    error
+                );
+            }
+
+            // Notify the student unless deletion notifications are disabled.
+            try {
+                let preferences = {};
+
+                try {
+                    preferences = JSON.parse(
+                        localStorage.getItem(`studentSettings:${email}`) || "{}"
+                    ) || {};
+                } catch {
+                    preferences = {};
+                }
+
+                if (preferences.applicationDeleted !== false) {
+                    const storedNotifications = JSON.parse(
+                        localStorage.getItem("notifications") || "[]"
+                    );
+
+                    const notifications = Array.isArray(storedNotifications)
+                        ? storedNotifications
+                        : [];
+
+                    const notification = {
+                        id: `application-deleted-${Date.now()}-${email}`,
+                        studentEmail: email,
+                        message: `Application removed: Your application for ${application.title || "an opportunity"} at ${application.company || "the company"} was removed from My Applications.`,
+                        date: new Date().toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric"
+                        }),
+                        read: false,
+                        type: "application-deleted",
+                        opportunityId: application.id ?? null
+                    };
+
+                    localStorage.setItem(
+                        "notifications",
+                        JSON.stringify([notification, ...notifications])
+                    );
+
+                    window.dispatchEvent(new Event("notificationsChange"));
+                }
+            } catch (error) {
+                console.error(
+                    "Could not create application deletion notification:",
+                    error
+                );
+            }
+
+            window.dispatchEvent(new Event("dashboardDataUpdated"));
+
+            alert("Application removed successfully!");
+        } catch (error) {
+            alert(error.message || "Could not remove application.");
+        }
     }
+
+
+
+
 
     return (
         <div className="my-applications-container">
@@ -140,7 +312,11 @@ function MyApplications() {
                 Track your applications and update their current status.
             </p>
 
-            {applications.length === 0 ? (
+            {loading ? (
+                <p>Loading your applications...</p>
+            ) : loadError ? (
+                <div className="alert alert-danger">{loadError}</div>
+            ) : applications.length === 0 ? (
                 <div className="application-empty">
                     <p>
                         You have not applied for any opportunities yet.
@@ -163,7 +339,9 @@ function MyApplications() {
                                 `${application.id || application.title}-${index}`
                             }
                         >
-                            <h2>{application.title || "Untitled Opportunity"}</h2>
+                            <h2>
+                                {application.title || "Untitled Opportunity"}
+                            </h2>
 
                             <p>
                                 <strong>Company:</strong>{" "}
@@ -190,62 +368,41 @@ function MyApplications() {
                                 {application.appliedDate || "Not recorded"}
                             </p>
 
-                            <label>
-                                <strong>Application Status:</strong>
 
-                                <select
-                                    value={
-                                        STATUSES.includes(application.status)
-                                            ? application.status
-                                            : "Applied"
-                                    }
-                                    onChange={(event) =>
-                                        handleStatusChange(
-                                            index,
-                                            event.target.value
-                                        )
-                                    }
+
+                            <div className="application-card-actions">
+                                {application.companyWebsite && (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            window.open(
+                                                application.companyWebsite,
+                                                "_blank",
+                                                "noopener,noreferrer"
+                                            )
+                                        }
+                                    >
+                                        <ExternalLink size={18} />
+                                        Visit Website
+                                    </button>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemove(index)}
+                                    title="Remove application"
+                                    aria-label="Remove application"
                                 >
-                                    {STATUSES.map((status) => (
-                                        <option key={status} value={status}>
-                                            {status}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-
-<div className="application-card-actions">
-    {application.companyWebsite && (
-        <button
-            type="button"
-            onClick={() =>
-                window.open(
-                    application.companyWebsite,
-                    "_blank",
-                    "noopener,noreferrer"
-                )
-            }
-        >
-            <ExternalLink size={18} />
-            Visit Website
-        </button>
-    )}
-
-    <button
-        type="button"
-        onClick={() => handleRemove(index)}
-    >
-        <Trash2 size={18} />
-        
-    </button>
-</div>
-
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
             )}
         </div>
     );
+
 }
 
 export default MyApplications;

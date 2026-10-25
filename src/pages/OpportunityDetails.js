@@ -7,64 +7,32 @@ import {
     useSearchParams
 
 } from "react-router-dom";
-import {GraduationCap, ChevronLeft, ExternalLink,
+import {
+    GraduationCap, ChevronLeft, ExternalLink,
     CheckCircle,
-    Check } from "lucide-react";
+    Check
+} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
-import opportunities from "../opportunitiesData";
+
 
 function getAllOpportunities() {
-
     let coordinatorOpportunities = [];
 
     try {
-
         const data = JSON.parse(
-
             localStorage.getItem("opportunities") || "[]"
-
         );
 
         coordinatorOpportunities = Array.isArray(data) ? data : [];
-
     } catch {
-
         coordinatorOpportunities = [];
-
     }
 
-    const combined = [
-
-        ...(Array.isArray(opportunities) ? opportunities : []),
-
-        ...coordinatorOpportunities
-
-    ];
-
-    return combined.reduce((result, item) => {
-
-        const index = result.findIndex(
-
-            (existing) => String(existing.id) === String(item.id)
-
-        );
-
-        if (index === -1) {
-
-            result.push(item);
-
-        } else {
-
-            result[index] = item;
-
-        }
-
-        return result;
-
-    }, []);
-
+    // Return coordinator opportunities stored locally.
+    return coordinatorOpportunities;
 }
+
 
 function getStoredArray(key) {
 
@@ -82,6 +50,81 @@ function getStoredArray(key) {
 
 }
 
+function isOpportunityExpired(deadline) {
+    if (!deadline) return false;
+
+    // Expected format: YYYY-MM-DD
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+        String(deadline).trim()
+    );
+
+    // Do not silently treat an invalid date as an expired opportunity.
+    if (!match) return false;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+
+    const deadlineEnd = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+    // Reject impossible dates such as 2026-02-31.
+    if (
+        deadlineEnd.getFullYear() !== year ||
+        deadlineEnd.getMonth() !== month - 1 ||
+        deadlineEnd.getDate() !== day
+    ) {
+        return false;
+    }
+
+    return Date.now() > deadlineEnd.getTime();
+}
+// ==========================================
+// FETCH PUBLISHED OPPORTUNITIES FROM BACKEND
+// Loads opportunities from the Spring MVC API
+// and normalizes field names for the frontend.
+// ==========================================
+
+async function getPublishedOpportunities() {
+    const response = await fetch(
+        "http://localhost:8080/spit-backend/api/student/opportunities",
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data.message || "Unable to load opportunity details."
+        );
+    }
+
+    if (!Array.isArray(data)) {
+        throw new Error("Invalid opportunities response from backend.");
+    }
+
+    return data.map((item) => ({
+        ...item,
+        id: item.id ?? item.opportunity_id,
+        company: item.company ?? item.company_name ?? "",
+        companyDescription:
+            item.companyDescription ?? item.company_description ?? "",
+        description:
+            item.description ?? item.job_description ?? "",
+        jobDescription:
+            item.jobDescription ?? item.job_description ?? item.description ?? "",
+        type:
+            (item.type ?? item.opportunity_type ?? "").toUpperCase() === "JOB"
+                ? "Job"
+                : "Internship",
+        salaryStipend:
+            item.salaryStipend ?? item.salary_stipend ?? "",
+        companyWebsite:
+            item.companyWebsite ?? item.company_website ?? "",
+    }));
+}
 function OpportunityDetails() {
 
     const location = useLocation();
@@ -90,53 +133,85 @@ function OpportunityDetails() {
 
     const [searchParams] = useSearchParams();
 
+
+
+
+    // ==========================================
+    // OPPORTUNITY STATE
+    // Stores the opportunity displayed on this page.
+    // ==========================================
+
     const sharedId = searchParams.get("id");
 
     const stateOpportunity = location.state?.opportunity;
 
-    const allOpportunities = getAllOpportunities();
+    const [opportunity, setOpportunity] = useState(
+        sharedId ? null : stateOpportunity || null
+    );
 
-    let opportunity =
+    const [isOpportunityLoading, setIsOpportunityLoading] = useState(
+        Boolean(sharedId)
+    );
 
-        stateOpportunity ||
+    const [opportunityLoadError, setOpportunityLoadError] = useState("");
 
-        allOpportunities.find(
 
-            (item) => String(item.id) === String(sharedId)
+    // ==========================================
+    // LOAD THE OPPORTUNITY
+    // If a shared ID exists, fetch the opportunity
+    // from the backend instead of relying on localStorage.
+    // ==========================================
 
-        );
+    useEffect(() => {
+        let isActive = true;
 
-    if (!opportunity) {
-
-        const sharedData = searchParams.get("data");
-
-        if (sharedData) {
-
-            try {
-
-                opportunity = JSON.parse(sharedData);
-
-            } catch {
-
-                try {
-
-                    opportunity = JSON.parse(
-
-                        decodeURIComponent(sharedData)
-
-                    );
-
-                } catch {
-
-                    console.error("Unable to read shared opportunity.");
-
-                }
-
+        const loadOpportunity = async () => {
+            if (!sharedId) {
+                setOpportunity(stateOpportunity || null);
+                setIsOpportunityLoading(false);
+                setOpportunityLoadError("");
+                return;
             }
 
-        }
+            setIsOpportunityLoading(true);
+            setOpportunityLoadError("");
 
-    }
+            try {
+                const publishedOpportunities =
+                    await getPublishedOpportunities();
+
+                const matchedOpportunity = publishedOpportunities.find(
+                    (item) => String(item.id) === String(sharedId)
+                );
+
+                if (!matchedOpportunity) {
+                    throw new Error(
+                        "This opportunity was not found or is no longer published."
+                    );
+                }
+
+                if (isActive) {
+                    setOpportunity(matchedOpportunity);
+                }
+            } catch (error) {
+                if (isActive) {
+                    setOpportunity(null);
+                    setOpportunityLoadError(error.message);
+                }
+            } finally {
+                if (isActive) {
+                    setIsOpportunityLoading(false);
+                }
+            }
+        };
+
+        loadOpportunity();
+
+        return () => {
+            isActive = false;
+        };
+    }, [sharedId, stateOpportunity]);
+
 
     const isStudent =
 
@@ -145,34 +220,85 @@ function OpportunityDetails() {
         localStorage.getItem("userRole") === "student";
 
     const opportunityId = opportunity?.id;
+    const isExpired = isOpportunityExpired(opportunity?.deadline);
 
-    const [isApplied, setIsApplied] = useState(() => {
 
-        if (!opportunity) return false;
+    const [isApplied, setIsApplied] = useState(false);
 
-        return getStoredArray("startedApplications").some(
 
-            (application) =>
+    useEffect(() => {
+        if (!opportunity?.id) {
+            setIsApplied(false);
+            return;
+        }
 
-                (
+        let cancelled = false;
 
-                    application.id != null &&
+        const checkApplicationStatus = async () => {
+            try {
+                const response = await fetch(
+                    "http://localhost:8080/spit-backend/api/student/applications",
+                    {
+                        method: "GET",
+                        credentials: "include",
+                    }
+                );
 
-                    String(application.id) === String(opportunity.id)
+                if (!response.ok) {
+                    throw new Error("Unable to check application status.");
+                }
 
-                ) ||
+                const applications = await response.json();
 
-                (
+                const alreadyApplied = Array.isArray(applications) &&
+                    applications.some((application) =>
+                        String(application.id) === String(opportunity.id)
+                    );
 
-                    application.company === opportunity.company &&
+                if (!cancelled) {
+                    setIsApplied(alreadyApplied);
+                }
+            } catch (error) {
+                console.error("Error checking application status:", error);
 
-                    application.title === opportunity.title
+                // Keep the existing localStorage check as a fallback.
+                let currentUser = {};
 
-                )
+                try {
+                    currentUser = JSON.parse(
+                        localStorage.getItem("currentUser") || "{}"
+                    );
+                } catch {
+                    currentUser = {};
+                }
 
-        );
+                const email = String(currentUser.email || "")
+                    .trim()
+                    .toLowerCase();
 
-    });
+                const alreadyApplied = getStoredArray("startedApplications").some(
+                    (application) =>
+                        String(application.studentEmail || "")
+                            .trim()
+                            .toLowerCase() === email &&
+                        String(application.id) === String(opportunity.id)
+                );
+
+                if (!cancelled) {
+                    setIsApplied(alreadyApplied);
+                }
+            }
+        };
+
+        checkApplicationStatus();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [opportunity?.id]);
+
+
+
 
     // Never enable the button just because an old session value exists.
 
@@ -273,33 +399,34 @@ function OpportunityDetails() {
         };
 
     }, [opportunityId]);
-
-    if (!opportunity) {
-
+    // Show loading while fetching the opportunity from the backend
+    if (isOpportunityLoading) {
         return (
+            <div className="container mt-5 text-center">
+                <h4>Loading Opportunity...</h4>
+            </div>
+        );
+    }
 
-            <div className="opportunity-details-container">
-
-                <h1>Opportunity Not Found</h1>
+    // Show an error if the opportunity could not be loaded
+    if (!opportunity) {
+        return (
+            <div className="container mt-5 text-center">
+                <h4>Opportunity Not Found</h4>
 
                 <p>
-
-                    This opportunity may have been removed or the link
-
-                    may be incorrect.
-
+                    {opportunityLoadError ||
+                        "This opportunity could not be found."}
                 </p>
 
-                <button onClick={() => navigate("/opportunities")}>
-
-                    <ChevronLeft size={18} /> Back to Opportunities
-
+                <button
+                    className="btn btn-primary"
+                    onClick={() => navigate(-1)}
+                >
+                    Go Back
                 </button>
-
             </div>
-
         );
-
     }
 
     const skillsText = Array.isArray(opportunity.skills)
@@ -317,6 +444,10 @@ function OpportunityDetails() {
     const handleOpenOfficialPage = () => {
 
         if (!officialWebsite) {
+            if (isOpportunityExpired(opportunity?.deadline)) {
+                alert("This opportunity has expired. You can no longer start a new application.");
+                return;
+            }
 
             alert(
 
@@ -392,8 +523,11 @@ function OpportunityDetails() {
 
     };
 
-    const handleApplied = () => {
-
+    const handleApplied = async () => {
+        if (isOpportunityExpired(opportunity?.deadline)) {
+            alert("This opportunity has expired. You cannot record a new application.");
+            return;
+        }
         if (isApplied) return;
 
         if (!hasVisitedOfficialPage) {
@@ -408,160 +542,165 @@ function OpportunityDetails() {
 
         }
 
-        const existingApplications =
-
-            getStoredArray("startedApplications");
-
-        const alreadyRecorded = existingApplications.some(
-
-            (application) =>
-
-                (
-
-                    application.id != null &&
-
-                    String(application.id) === String(opportunityId)
-
-                ) ||
-
-                (
-
-                    application.company === opportunity.company &&
-
-                    application.title === opportunity.title
-
-                )
-
-        );
-
-        if (alreadyRecorded) {
-
-            setIsApplied(true);
-
-            alert("This application is already recorded.");
-
-            return;
-
-        }
 
         const currentUser = JSON.parse(
-
-    localStorage.getItem("currentUser") || "{}"
-
-);
-
-const newApplication = {
-
-    ...opportunity,
-
-    studentName:
-
-        currentUser.name ||
-
-        currentUser.fullName ||
-
-        "Student name unavailable",
-
-    studentEmail: currentUser.email || "",
-
-    status: "Applied",
-
-    appliedDate: new Date().toLocaleDateString("en-GB", {
-
-        day: "2-digit",
-
-        month: "short",
-
-        year: "numeric"
-
-    })
-
-};
-
-        localStorage.setItem(
-
-            "startedApplications",
-
-            JSON.stringify([
-
-                ...existingApplications,
-
-                newApplication
-
-            ])
-
+            localStorage.getItem("currentUser") || "{}"
         );
 
-        // Notify the coordinator when a student records an application.
-        const coordinatorNotifications = getStoredArray(
-            "coordinatorNotifications"
-        );
+        const studentEmail = String(currentUser.email || "")
+            .trim()
+            .toLowerCase();
 
-        const coordinatorNotification = {
-            id: Date.now(),
-            message: `${newApplication.studentName} (${newApplication.studentEmail || "Email unavailable"}) recorded an application for ${opportunity.title || "an opportunity"} at ${opportunity.company || "a company"}.`,
-            date: new Date().toLocaleDateString("en-GB", {
+        if (!studentEmail) {
+            alert("Please log in again to record your application.");
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                "http://localhost:8080/spit-backend/api/student/applications",
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        opportunityId: opportunityId,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.status === 409) {
+                setIsApplied(true);
+                alert("This application is already recorded.");
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || "Could not record the application."
+                );
+            }
+        } catch (error) {
+            console.error("Error recording application:", error);
+            alert(error.message || "Unable to record the application.");
+            return;
+        }
+
+
+        const newApplication = {
+            ...opportunity,
+            studentName:
+                currentUser.name ||
+                currentUser.fullName ||
+                "Student name unavailable",
+            studentEmail: studentEmail,
+            status: "Applied",
+            appliedDate: new Date().toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "short",
-                year: "numeric"
+                year: "numeric",
             }),
-            read: false,
-            type: "new-application",
-            opportunityId: opportunity.id
         };
 
-        localStorage.setItem(
-            "coordinatorNotifications",
-            JSON.stringify([
-                coordinatorNotification,
-                ...coordinatorNotifications
-            ])
-        );
 
-        window.dispatchEvent(
-            new Event("coordinatorNotificationsChange")
-        );
+        // Notify the coordinator only if the preference is enabled.
+        let coordinatorPreferences = {};
+
+        try {
+            coordinatorPreferences = JSON.parse(
+                localStorage.getItem(
+                    "coordinatorNotificationPreferences"
+                ) || "{}"
+            ) || {};
+        } catch {
+            coordinatorPreferences = {};
+        }
+
+        // Default to enabled if no preference has been saved.
+        if (coordinatorPreferences.newApplications !== false) {
+            const coordinatorNotifications = getStoredArray(
+                "coordinatorNotifications"
+            );
+
+            const coordinatorNotification = {
+                id: Date.now(),
+                message: `${newApplication.studentName} (${newApplication.studentEmail || "Email unavailable"}) recorded an application for ${opportunity.title || "an opportunity"} at ${opportunity.company || "a company"}.`,
+                date: new Date().toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric"
+                }),
+                read: false,
+                type: "new-application",
+                opportunityId: opportunity.id
+            };
+
+            localStorage.setItem(
+                "coordinatorNotifications",
+                JSON.stringify([
+                    coordinatorNotification,
+                    ...coordinatorNotifications
+                ])
+            );
+
+            window.dispatchEvent(
+                new Event("coordinatorNotificationsChange")
+            );
+        }
 
 
-        const existingNotifications =
 
-            getStoredArray("notifications");
 
-        const newNotification = {
 
-            id: Date.now(),
 
-            message: `Application Added: You marked the ${opportunity.title} opportunity at ${opportunity.company} as applied.`,
+        // Create a student notification only if the preference is enabled.
+        let studentPreferences = {};
 
-            date: new Date().toLocaleDateString("en-GB", {
+        try {
+            studentPreferences = JSON.parse(
+                localStorage.getItem(`studentSettings:${studentEmail}`) || "{}"
+            ) || {};
+        } catch {
+            studentPreferences = {};
+        }
 
-                day: "2-digit",
+        // Default to enabled when no preference has been saved.
+        if (studentPreferences.applicationAdded !== false) {
+            const existingNotifications =
+                getStoredArray("notifications");
 
-                month: "short",
+            const newNotification = {
+                id: Date.now(),
+                studentEmail: studentEmail,
+                message: `Application Added: You marked the ${opportunity.title} opportunity at ${opportunity.company} as applied.`,
+                date: new Date().toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric"
+                }),
+                read: false,
+                type: "application-added",
+                opportunityId: opportunity.id
+            };
 
-                year: "numeric"
+            localStorage.setItem(
+                "notifications",
+                JSON.stringify([
+                    newNotification,
+                    ...existingNotifications
+                ])
+            );
 
-            }),
+            window.dispatchEvent(
+                new Event("notificationsChange")
+            );
+        }
 
-            read: false
 
-        };
-
-        localStorage.setItem(
-
-            "notifications",
-
-            JSON.stringify([
-
-                newNotification,
-
-                ...existingNotifications
-
-            ])
-
-        );
-
-        window.dispatchEvent(new Event("notificationsChange"));
 
         window.dispatchEvent(new Event("dashboardDataUpdated"));
 
@@ -586,7 +725,7 @@ const newApplication = {
     return (
 
         <div className="opportunity-details-container">
-               
+
             {!isStudent && (
                 <div className="login-application-message">
                     <h1>Want to apply for this opportunity?</h1>
@@ -598,112 +737,117 @@ const newApplication = {
                     </button>
                 </div>
             )}
-             <div className="opportunity-details-background">
-            <div className="opportunity-details-header">
-                <h2>{opportunity.title || "Untitled Opportunity"}</h2>
-                <p>
-                    <strong>Company:</strong>{" "}
+            <div className="opportunity-details-background">
+                <div className="opportunity-details-header">
+                    <h2>{opportunity.title || "Untitled Opportunity"}</h2>
+                    <p>
+                        <strong>Company:</strong>{" "}
 
-                    {opportunity.company || "Not specified"}
+                        {opportunity.company || "Not specified"}
 
-                </p>
+                    </p>
 
-                <p>
+                    <p>
 
-                    <strong>Location:</strong>{" "}
+                        <strong>Location:</strong>{" "}
 
-                    {opportunity.location || "Not specified"}
+                        {opportunity.location || "Not specified"}
 
-                </p>
+                    </p>
 
-                <p>
+                    <p>
 
-                    <strong>Type:</strong>{" "}
+                        <strong>Type:</strong>{" "}
 
-                    {opportunity.type || "Not specified"}
+                        {opportunity.type || "Not specified"}
 
-                </p>
+                    </p>
 
-                <p>
+                    <p>
 
-                    <strong>Deadline:</strong>{" "}
+                        <strong>Deadline:</strong>{" "}
 
-                    {opportunity.deadline || "Not specified"}
+                        {opportunity.deadline || "Not specified"}
 
-                </p>
+                    </p>
 
-            </div>
+                </div>
 
-            <div className="opportunity-details-content">
+                <div className="opportunity-details-content">
 
-                <h2>Company Description</h2>
+                    <h2>Company Description</h2>
 
-                <p>
+                    <p>
 
-                    {opportunity.companyDescription ||
+                        {opportunity.companyDescription ||
 
-                        "Company information has not been provided."}
+                            "Company information has not been provided."}
 
-                </p>
+                    </p>
 
-                <h2>Job Description</h2>
+                    <h2>Job Description</h2>
 
-                <p>
+                    <p>
 
-                    {opportunity.jobDescription ||
+                        {opportunity.jobDescription ||
 
-                        opportunity.description ||
+                            opportunity.description ||
 
-                        "Job description has not been provided."}
+                            "Job description has not been provided."}
 
-                </p>
+                    </p>
 
-                <h2>About the Opportunity</h2>
 
-                <p>
 
-                    {opportunity.description ||
+                    <h2>Skills Required</h2>
 
-                        "No additional information provided."}
+                    <p>{skillsText}</p>
 
-                </p>
+                    <h2>Eligibility</h2>
 
-                <h2>Skills Required</h2>
+                    <p>{opportunity.eligibility || "Not specified"}</p>
 
-                <p>{skillsText}</p>
+                    <h2>Stipend / Salary</h2>
 
-                <h2>Eligibility</h2>
+                    <p>
 
-                <p>{opportunity.eligibility || "Not specified"}</p>
+                        {opportunity.salaryStipend ||
 
-                <h2>Stipend / Salary</h2>
+                            opportunity.salary ||
 
-                <p>
+                            opportunity.stipend ||
 
-                    {opportunity.salaryStipend ||
+                            "As per company norms"}
 
-                        opportunity.salary ||
+                    </p>
 
-                        opportunity.stipend ||
-
-                        "As per company norms"}
-
-                </p>
-
-            </div>
+                </div>
             </div>
 
             {isStudent && (
 
                 <div className="opportunity-details-actions">
 
+
                     {isApplied ? (
-
-                        <button disabled><Check size={18} />Applied</button>
-
-                    ) : (
-
+                        <button disabled>
+                            <Check size={18} /> Applied
+                        </button>
+                    ) : isExpired ? (
                         <div className="application-instruction">
+                            <h2>Application Closed</h2>
+                            <p>
+                                The deadline for this opportunity has passed.
+                                You can still view the opportunity details, but
+                                new applications can no longer be started.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="application-instruction">
+
+
+
+
 
                             <h2>Application Instructions</h2>
 
@@ -725,7 +869,7 @@ const newApplication = {
 
                             >
 
-                               <ExternalLink size={18} /> Open Official Application Page
+                                <ExternalLink size={18} /> Open Official Application Page
 
                             </button>
 
@@ -749,7 +893,7 @@ const newApplication = {
 
                             >
 
-                              <CheckCircle size={18} />  I've Applied
+                                <CheckCircle size={18} />  I've Applied
 
                             </button>
 

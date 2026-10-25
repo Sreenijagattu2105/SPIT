@@ -1,22 +1,55 @@
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+function getCurrentStudentEmail() {
+  try {
+    const user = JSON.parse(
+      localStorage.getItem("currentUser") || "null"
+    );
+
+    return String(user?.email || "").trim().toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 function SavedOpportunities() {
   const [savedOpportunities, setSavedOpportunities] = useState([]);
 
-  // Safely read saved opportunities
-  const loadSavedOpportunities = () => {
-    try {
-      const saved = JSON.parse(
-        localStorage.getItem("savedOpportunities") || "[]"
-      );
 
-      return Array.isArray(saved) ? saved : [];
-    } catch (error) {
-      console.error("Error loading saved opportunities:", error);
-      return [];
+  const loadSavedOpportunities = async () => {
+    const response = await fetch(
+      "http://localhost:8080/spit-backend/api/student/saved-opportunities",
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Unable to load saved opportunities."
+      );
     }
+
+    return data.map((item) => ({
+      ...item,
+      id: item.id ?? item.opportunity_id,
+      company: item.company ?? item.company_name ?? "",
+      type:
+        (item.type ?? item.opportunity_type ?? "").toUpperCase() === "JOB"
+          ? "Job"
+          : "Internship",
+      salaryStipend: item.salaryStipend ?? item.salary_stipend ?? "",
+      deadline: item.deadline
+        ? String(item.deadline).slice(0, 10)
+        : "",
+    }));
   };
+
+
 
   // Check upcoming deadlines and create daily student reminders
   const checkDeadlineReminders = (opportunities) => {
@@ -160,55 +193,89 @@ function SavedOpportunities() {
   };
 
   // Load opportunities and check reminders
+
   useEffect(() => {
-    const loadAndCheck = () => {
-      const opportunities = loadSavedOpportunities();
-      setSavedOpportunities(opportunities);
-      checkDeadlineReminders(opportunities);
+    let isActive = true;
+
+    const loadAndCheck = async () => {
+      try {
+        const opportunities = await loadSavedOpportunities();
+
+        if (isActive) {
+          setSavedOpportunities(opportunities);
+          checkDeadlineReminders(opportunities);
+        }
+      } catch (error) {
+        console.error("Error loading saved opportunities:", error);
+
+        if (isActive) {
+          setSavedOpportunities([]);
+        }
+      }
     };
 
     loadAndCheck();
 
     window.addEventListener("savedOpportunitiesChange", loadAndCheck);
-    window.addEventListener("storage", loadAndCheck);
 
     return () => {
-      window.removeEventListener("savedOpportunitiesChange", loadAndCheck);
-      window.removeEventListener("storage", loadAndCheck);
+      isActive = false;
+      window.removeEventListener(
+        "savedOpportunitiesChange",
+        loadAndCheck
+      );
     };
   }, []);
 
-  // Remove a saved opportunity
-  const handleRemove = (opportunityToRemove) => {
-    const updatedOpportunities = savedOpportunities.filter(
-      (opportunity) =>
-        !(
-          opportunity.company === opportunityToRemove.company &&
-          opportunity.title === opportunityToRemove.title
-        )
+
+
+
+  const handleRemove = async (opportunityToRemove) => {
+    const confirmed = window.confirm(
+      `Remove "${opportunityToRemove.title}" from your saved opportunities?`
     );
 
-    localStorage.setItem(
-      "savedOpportunities",
-      JSON.stringify(updatedOpportunities)
-    );
+    if (!confirmed) return;
 
-    setSavedOpportunities(updatedOpportunities);
+    try {
+      const response = await fetch(
+        `http://localhost:8080/spit-backend/api/student/saved-opportunities/${opportunityToRemove.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
-    window.dispatchEvent(new Event("savedOpportunitiesChange"));
+      const data = await response.json();
 
-    alert("Opportunity removed from saved list.");
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to remove the saved opportunity."
+        );
+      }
+
+      const updated = await loadSavedOpportunities();
+
+      setSavedOpportunities(updated);
+      checkDeadlineReminders(updated);
+
+      window.dispatchEvent(new Event("savedOpportunitiesChange"));
+
+      alert("Opportunity removed from saved list.");
+    } catch (error) {
+      console.error("Error removing saved opportunity:", error);
+      alert(error.message || "Unable to remove the opportunity.");
+    }
   };
 
   return (
     <div className="container mt-4 saved-opportunities-page">
       <h1 className="mb-4">SAVED OPPORTUNITIES</h1>
-
-
-<p className="saved-opportunities-subtitle">
-    Keep your favorite career opportunities saved in one place
-    and access them whenever you're ready to apply.
-</p>
+      
+      <p className="saved-opportunities-subtitle">
+        Keep your favorite career opportunities saved in one place
+        and access them whenever you're ready to apply.
+      </p>
       {savedOpportunities.length === 0 ? (
         <div className="alert alert-info">
           You have not saved any opportunities yet.

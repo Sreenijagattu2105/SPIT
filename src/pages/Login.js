@@ -9,7 +9,8 @@ function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleLogin = (e) => {
+
+    const handleLogin = async (e) => {
         e.preventDefault();
 
         const cleanEmail = email.trim().toLowerCase();
@@ -30,163 +31,145 @@ function Login() {
             return;
         }
 
-        if (role === "student") {
-            let students = [];
-
-            try {
-                const savedStudents = JSON.parse(
-                    localStorage.getItem("students") || "[]"
-                );
-
-                if (Array.isArray(savedStudents)) {
-                    students = savedStudents;
+        try {
+            const response = await fetch(
+                "http://localhost:8080/spit-backend/api/auth/login",
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: cleanEmail,
+                        password: password
+                    })
                 }
-            } catch {
-                students = [];
-            }
-
-            // Support existing accounts saved in the old format.
-            let registeredUser = null;
-
-            try {
-                registeredUser = JSON.parse(
-                    localStorage.getItem("registeredUser") || "null"
-                );
-            } catch {
-                registeredUser = null;
-            }
-
-            if (students.length === 0 && registeredUser) {
-                students = [registeredUser];
-
-                localStorage.setItem(
-                    "students",
-                    JSON.stringify(students)
-                );
-            } else if (
-                registeredUser &&
-                !students.some(
-                    (student) =>
-                        String(student.email || "").toLowerCase() ===
-                        String(registeredUser.email || "").toLowerCase()
-                )
-            ) {
-                // Preserve the legacy account if it is missing from the list.
-                students.push(registeredUser);
-
-                localStorage.setItem(
-                    "students",
-                    JSON.stringify(students)
-                );
-            }
-
-            const student = students.find(
-                (item) =>
-                    String(item.email || "").toLowerCase() === cleanEmail
             );
 
-            if (!student) {
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.message || "Invalid email or password.");
+                return;
+            }
+
+            // The backend determines the account's actual role.
+            const actualRole = data.role?.toLowerCase();
+
+            if (actualRole !== role) {
                 alert(
-                    "No student account found with this email. Please register first."
+                    `This account is registered as ${actualRole || "an unknown role"
+                    }. Please select the correct login role.`
                 );
                 return;
             }
 
-            if (student.password !== password) {
-                alert("Incorrect password.");
-                return;
-            }
+            const loggedInUser = {
+                id: Number(data.userId),
+                userId: Number(data.userId),
+                name: data.fullName,
+                fullName: data.fullName,
+                email: data.email,
+                role: actualRole
+            };
+
+            // Clear any previous user's data before saving the new login.
+            localStorage.removeItem("currentUser");
+            localStorage.removeItem("registeredUser");
 
             localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("userRole", "student");
-
-            // Save the currently logged-in student's details separately.
+            localStorage.setItem("userRole", actualRole);
             localStorage.setItem(
                 "currentUser",
-                JSON.stringify({
-                    id: student.id,
-                    name: student.name || student.fullName || student.studentName,
-                    email: student.email,
-                    phone: student.phone || ""
-                })
+                JSON.stringify(loggedInUser)
             );
 
-            window.dispatchEvent(new Event("authChange"));
-            navigate("/student-dashboard");
-        } else if (role === "coordinator") {
-            // Retains your existing coordinator-login behavior.
-            localStorage.setItem("isLoggedIn", "true");
-            localStorage.setItem("userRole", "coordinator");
+            if (actualRole === "student") {
+                localStorage.setItem(
+                    "registeredUser",
+                    JSON.stringify(loggedInUser)
+                );
 
-            window.dispatchEvent(new Event("authChange"));
-            navigate("/coordinator-dashboard");
+                window.dispatchEvent(new Event("authChange"));
+                navigate("/student-dashboard");
+            } else if (actualRole === "coordinator") {
+                window.dispatchEvent(new Event("authChange"));
+                navigate("/coordinator-dashboard");
+            }
+        } catch (error) {
+            console.error("Login failed:", error);
+            alert(
+                "Unable to connect to the server. Please ensure the backend is running."
+            );
         }
     };
 
-   
-return (
-    <div className="login-page">
-        <div className="login-container">
-            <h1>LOGIN</h1>
 
-            <p>Login to access your SPIT account.</p>
 
-            <div className="login-form-box">
-                <form onSubmit={handleLogin}>
-                    <label>Select Role</label>
-                    <select
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
+    return (
+        <div className="login-page">
+            <div className="login-container">
+                <h1>LOGIN</h1>
+
+                <p>Login to access your SPIT account.</p>
+
+                <div className="login-form-box">
+                    <form onSubmit={handleLogin}>
+                        <label>Select Role</label>
+                        <select
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                        >
+                            <option value="student">Student</option>
+                            <option value="coordinator">
+                                Placement Coordinator
+                            </option>
+                        </select>
+
+                        <label>Email</label>
+                        <input
+                            type="email"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+
+                        <label>Password</label>
+                        <input
+                            type="password"
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+
+                        <button type="submit"> <LogIn size={18} />Login</button>
+                    </form>
+                </div>
+
+                <p className="forgot-password-link">
+                    <button
+                        type="button"
+                        onClick={() => navigate("/forgot-password")}
                     >
-                        <option value="student">Student</option>
-                        <option value="coordinator">
-                            Placement Coordinator
-                        </option>
-                    </select>
+                        <KeyRound size={18} /> Forgot Password ?
+                    </button>
+                </p>
 
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-
-                    <button type="submit"> <LogIn size={18} />Login</button>
-                </form>
+                <p>
+                    Don't have an account?{" "}
+                    <button
+                        type="button"
+                        onClick={() => navigate("/register")}
+                    >
+                        <UserPlus size={18} /> Register
+                    </button>
+                </p>
             </div>
-
-            <p className="forgot-password-link">
-                <button
-                    type="button"
-                    onClick={() => navigate("/forgot-password")}
-                >
-                    <KeyRound size={18} /> Forgot Password ?
-                </button>
-            </p>
-
-            <p>
-                Don't have an account?{" "}
-                <button
-                    type="button"
-                    onClick={() => navigate("/register")}
-                >
-                    <UserPlus size={18} /> Register
-                </button>
-            </p>
         </div>
-    </div>
-);
+    );
 
 }
 

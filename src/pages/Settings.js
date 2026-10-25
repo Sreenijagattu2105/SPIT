@@ -4,79 +4,168 @@ import { useNavigate } from "react-router-dom";
 import { UserRound, Trash2, Save, RefreshCw } from "lucide-react";
 function Settings() {
     const navigate = useNavigate();
+    const getLoggedInEmail = () => {
+        try {
+            const currentUser = JSON.parse(
+                localStorage.getItem("currentUser") || "null"
+            );
 
-    const [emailAlerts, setEmailAlerts] = useState(true);
-    const [applicationUpdates, setApplicationUpdates] = useState(true);
-    const [opportunityAlerts, setOpportunityAlerts] = useState(true);
+            const registeredUser = JSON.parse(
+                localStorage.getItem("registeredUser") || "null"
+            );
 
+            return String(
+                currentUser?.email || registeredUser?.email || ""
+            ).trim().toLowerCase();
+        } catch {
+            return "";
+        }
+    };
+    const [opportunityPublished, setOpportunityPublished] = useState(true);
+    const [opportunityUpdated, setOpportunityUpdated] = useState(true);
+
+    const [deadline7Days, setDeadline7Days] = useState(true);
+    const [deadline3Days, setDeadline3Days] = useState(true);
+    const [deadline1Day, setDeadline1Day] = useState(true);
+    const [deadlineDay, setDeadlineDay] = useState(true);
+
+    const [applicationAdded, setApplicationAdded] = useState(true);
+    const [applicationDeleted, setApplicationDeleted] = useState(true);
+    const [savedPreferences, setSavedPreferences] = useState(null);
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [passwordUpdated, setPasswordUpdated] = useState(true);
 
-    // Load saved notification preferences
+    // Load notification preferences for the logged-in student
+
+    // Load notification preferences from the backend
     useEffect(() => {
-        try {
-            const savedSettings = JSON.parse(
-                localStorage.getItem("studentSettings") || "null"
-            );
+        const loadNotificationPreferences = async () => {
+            try {
+                const response = await fetch(
+                    "http://localhost:8080/spit-backend/api/student/notification-preferences",
+                    {
+                        method: "GET",
+                        credentials: "include"
+                    }
+                );
 
-            if (savedSettings) {
-                setEmailAlerts(savedSettings.emailAlerts ?? true);
-                setApplicationUpdates(
-                    savedSettings.applicationUpdates ?? true
-                );
-                setOpportunityAlerts(
-                    savedSettings.opportunityAlerts ?? true
-                );
+                if (!response.ok) {
+                    throw new Error("Unable to load notification preferences.");
+                }
+
+                const settings = await response.json();
+
+                setOpportunityPublished(settings.opportunityPublished);
+                setOpportunityUpdated(settings.opportunityUpdated);
+
+                setDeadline7Days(settings.deadline7Days);
+                setDeadline3Days(settings.deadline3Days);
+                setDeadline1Day(settings.deadline1Day);
+                setDeadlineDay(settings.deadlineDay);
+
+                setApplicationAdded(settings.applicationAdded);
+                setApplicationDeleted(settings.applicationDeleted);
+                setPasswordUpdated(settings.passwordUpdated ?? true);
+                setSavedPreferences({
+                    opportunityPublished: settings.opportunityPublished,
+                    opportunityUpdated: settings.opportunityUpdated,
+                    deadline7Days: settings.deadline7Days,
+                    deadline3Days: settings.deadline3Days,
+                    deadline1Day: settings.deadline1Day,
+                    deadlineDay: settings.deadlineDay,
+
+                    applicationAdded: settings.applicationAdded,
+                    applicationDeleted: settings.applicationDeleted,
+                    passwordUpdated: settings.passwordUpdated ?? true,
+                });
+            } catch (error) {
+                console.error("Error loading notification preferences:", error);
+                alert("Unable to load notification preferences. Please try again.");
             }
-        } catch {
-            console.error("Unable to load saved settings.");
-        }
-    }, []);
-
-    // Save notification preferences
-    const saveSettings = () => {
-        const settings = {
-            emailAlerts,
-            applicationUpdates,
-            opportunityAlerts
         };
 
-        localStorage.setItem(
-            "studentSettings",
-            JSON.stringify(settings)
+        loadNotificationPreferences();
+    }, []);
+
+
+
+    const saveSettings = async () => {
+
+        if (savedPreferences === null) {
+            alert("Please wait until notification preferences finish loading.");
+            return;
+        }
+
+        const currentPreferences = {
+            opportunityPublished,
+            opportunityUpdated,
+            deadline7Days,
+            deadline3Days,
+            deadline1Day,
+            deadlineDay,
+            applicationAdded,
+            applicationDeleted,
+            passwordUpdated
+        };
+
+        const hasChanges = Object.keys(currentPreferences).some(
+            key => currentPreferences[key] !== savedPreferences[key]
         );
 
-        alert("Settings saved successfully!");
-    };
+        if (!hasChanges) {
+            alert("No changes were made to your notification preferences.");
+            return;
+        }
 
-    // Change password (frontend prototype only)
-    const changePassword = () => {
-        let user;
+        const settings = {
+            opportunityPublished,
+            opportunityUpdated,
+            deadline7Days,
+            deadline3Days,
+            deadline1Day,
+            deadlineDay,
+            applicationAdded,
+            applicationDeleted,
+            passwordUpdated
+        };
 
         try {
-            user = JSON.parse(
-                localStorage.getItem("registeredUser") || "null"
+            const response = await fetch(
+                "http://localhost:8080/spit-backend/api/student/notification-preferences",
+                {
+                    method: "PUT",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(settings)
+                }
             );
-        } catch {
-            alert("Unable to read the saved account details.");
-            return;
-        }
 
-        if (!user) {
-            alert("Student account details were not found.");
-            return;
-        }
+            const result = await response.json();
 
+            if (!response.ok) {
+                throw new Error(
+                    result.message || "Unable to save notification preferences."
+                );
+            }
+            setSavedPreferences({ ...settings });
+            alert("Notification preferences saved successfully!");
+
+        } catch (error) {
+            console.error("Error saving notification preferences:", error);
+            alert(error.message || "Unable to save notification preferences.");
+        }
+    };
+
+
+
+
+    const changePassword = async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
             alert("Please fill in all password fields.");
-            return;
-        }
-
-        if (!user.password || user.password !== currentPassword) {
-            alert(
-                "Current password is incorrect, or password verification is not configured."
-            );
             return;
         }
 
@@ -90,221 +179,311 @@ function Settings() {
             return;
         }
 
-        const updatedUser = {
-            ...user,
-            password: newPassword
-        };
+        if (currentPassword === newPassword) {
+            alert("New password must differ from the current password.");
+            return;
+        }
 
-        localStorage.setItem(
-            "registeredUser",
-            JSON.stringify(updatedUser)
-        );
+        try {
+            const response = await fetch(
+                "http://localhost:8080/spit-backend/api/auth/change-password",
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword
+                    })
+                }
+            );
 
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
+            const data = await response.json();
 
-        alert("Password updated successfully!");
+            if (!response.ok) {
+                alert(data.message || "Unable to change password.");
+                return;
+            }
+
+            alert(data.message || "Password changed successfully!");
+
+            // Refresh the student's notification list.
+            window.dispatchEvent(new Event("notificationsChange"));
+
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+
+        } catch (error) {
+            console.error("Change password error:", error);
+            alert("Could not connect to the server. Please check that the backend is running.");
+        }
     };
 
-    // Delete account (frontend prototype only)
-    const deleteAccount = () => {
+
+
+    const deleteAccount = async () => {
         const confirmed = window.confirm(
-            "Are you sure you want to delete your account? This action cannot be undone."
+            "Are you sure you want to deactivate your SPIT account? You will no longer be able to log in."
         );
 
         if (!confirmed) return;
 
-        let user;
-
         try {
-            user = JSON.parse(
-                localStorage.getItem("registeredUser") || "null"
+            const response = await fetch(
+                "http://localhost:8080/spit-backend/api/auth/account",
+                {
+                    method: "DELETE",
+                    credentials: "include"
+                }
             );
-        } catch {
-            alert("Unable to read the saved account details.");
-            return;
-        }
 
-        // Remove the current user's saved profile record, if present
-        if (user?.email) {
-            try {
-                const students = JSON.parse(
-                    localStorage.getItem("students") || "[]"
-                );
+            const result = await response.json();
 
-                const remainingStudents = students.filter(
-                    student => student.email !== user.email
-                );
-
-                localStorage.setItem(
-                    "students",
-                    JSON.stringify(remainingStudents)
-                );
-            } catch {
-                alert("Unable to process the saved student records.");
+            if (!response.ok) {
+                alert(result.message || "Unable to deactivate your account.");
                 return;
             }
+
+            // The backend has successfully deactivated the account.
+            // Clear only the current browser session.
+            ["currentUser", "registeredUser"].forEach(key => {
+                try {
+                    const user = JSON.parse(
+                        localStorage.getItem(key) || "null"
+                    );
+
+                    if (user) {
+                        localStorage.removeItem(key);
+                    }
+                } catch {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            localStorage.removeItem("isLoggedIn");
+            localStorage.removeItem("userRole");
+
+            alert(result.message || "Your account has been deactivated.");
+
+            navigate("/", { replace: true });
+            window.location.reload();
+
+        } catch (error) {
+            console.error("Account deactivation error:", error);
+            alert(
+                "Could not connect to the backend. Your account was not deactivated by this request."
+            );
         }
-
-        // Clear locally stored session and personal data
-        [
-            "registeredUser",
-            "isLoggedIn",
-            "userRole",
-            "studentSettings",
-            "startedApplications",
-            "savedOpportunities"
-        ].forEach(key => localStorage.removeItem(key));
-
-        alert("Local account data has been removed.");
-
-        navigate("/", { replace: true });
-        window.location.reload();
     };
 
- 
-return (
-    <div className="settings-container">
-        <h1>SETTINGS</h1>
 
-        <p className="settings-intro">
-            Manage your account and notification preferences.
-        </p>
 
-        {/* Main blue box */}
-        <div className="settings-content-box">
+    return (
+        <div className="settings-container">
+            <h1>SETTINGS</h1>
 
-            <section className="settings-section account-settings">
-    
-        <h2>Account Settings</h2>
-<div className="settings-inner-white-box">
-        <p>Update your personal information.</p>
+            <p className="settings-intro">
+                Manage your account and notification preferences.
+            </p>
 
-        <button
-            type="button"
-            onClick={() => navigate("/profile")}
-        >
-             <UserRound size={18} /> Manage Profile
-        </button>
-    </div>
-</section>
+            {/* Main blue box */}
+            <div className="settings-content-box">
 
-            <section className="settings-section password-settings">
-    <h2>Change Password</h2>
+                <section className="settings-section account-settings">
 
-    <div className="settings-inner-white-box">
-        <label htmlFor="currentPassword">
-            Current Password
-        </label>
-        <input
-            id="currentPassword"
-            type="password"
-            autoComplete="current-password"
-            value={currentPassword}
-            onChange={e => setCurrentPassword(e.target.value)}
-            placeholder="Enter current password"
-        />
+                    <h2>Account Settings</h2>
+                    <div className="settings-inner-white-box">
+                        <p>Update your personal information.</p>
 
-        <label htmlFor="newPassword">
-            New Password
-        </label>
-        <input
-            id="newPassword"
-            type="password"
-            autoComplete="new-password"
-            value={newPassword}
-            onChange={e => setNewPassword(e.target.value)}
-            placeholder="At least 8 characters"
-        />
+                        <button
+                            type="button"
+                            onClick={() => navigate("/profile")}
+                        >
+                            <UserRound size={18} /> Manage Profile
+                        </button>
+                    </div>
+                </section>
 
-        <label htmlFor="confirmPassword">
-            Confirm New Password
-        </label>
-        <input
-            id="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={e => setConfirmPassword(e.target.value)}
-            placeholder="Re-enter new password"
-        />
+                <section className="settings-section password-settings">
+                    <h2>Change Password</h2>
 
-        <button type="button" onClick={changePassword}>
-           <RefreshCw size={18} />  Update Password
-        </button>
-    </div>
-</section>
-            <section className="settings-section notification-settings">
-    <h2>Notification Preferences</h2>
+                    <div className="settings-inner-white-box">
+                        <label htmlFor="currentPassword">
+                            Current Password
+                        </label>
+                        <input
+                            id="currentPassword"
+                            type="password"
+                            autoComplete="current-password"
+                            value={currentPassword}
+                            onChange={e => setCurrentPassword(e.target.value)}
+                            placeholder="Enter current password"
+                        />
 
-    <div className="settings-inner-white-box">
-        <label className="settings-option">
-            <span>Email Alerts</span>
-            <input
-                type="checkbox"
-                checked={emailAlerts}
-                onChange={e => setEmailAlerts(e.target.checked)}
-            />
-        </label>
+                        <label htmlFor="newPassword">
+                            New Password
+                        </label>
+                        <input
+                            id="newPassword"
+                            type="password"
+                            autoComplete="new-password"
+                            value={newPassword}
+                            onChange={e => setNewPassword(e.target.value)}
+                            placeholder="At least 8 characters"
+                        />
 
-        <label className="settings-option">
-            <span>Application Updates</span>
-            <input
-                type="checkbox"
-                checked={applicationUpdates}
-                onChange={e =>
-                    setApplicationUpdates(e.target.checked)
-                }
-            />
-        </label>
+                        <label htmlFor="confirmPassword">
+                            Confirm New Password
+                        </label>
+                        <input
+                            id="confirmPassword"
+                            type="password"
+                            autoComplete="new-password"
+                            value={confirmPassword}
+                            onChange={e => setConfirmPassword(e.target.value)}
+                            placeholder="Re-enter new password"
+                        />
 
-        <label className="settings-option">
-            <span>New Opportunity Alerts</span>
-            <input
-                type="checkbox"
-                checked={opportunityAlerts}
-                onChange={e =>
-                    setOpportunityAlerts(e.target.checked)
-                }
-            />
-        </label>
-</div>
-        <button
-            className="save-settings-button"
-            type="button"
-            onClick={saveSettings}
-        >
-           <Save size={18} />   Save Settings
-        </button>
-  
-</section>
+                        <button type="button" onClick={changePassword}>
+                            <RefreshCw size={18} />  Update Password
+                        </button>
+                    </div>
+                </section>
+                <section className="settings-section notification-settings">
+                    <h2>Notification Preferences</h2>
+
+
+                    <div className="settings-inner-white-box">
+                        <h3>Opportunity Notifications</h3>
+
+                        <label className="settings-option">
+                            <span>New opportunities published</span>
+                            <input
+                                type="checkbox"
+                                checked={opportunityPublished}
+                                onChange={e => setOpportunityPublished(e.target.checked)}
+                            />
+                        </label>
+
+                        <label className="settings-option">
+                            <span>Opportunity details updated</span>
+                            <input
+                                type="checkbox"
+                                checked={opportunityUpdated}
+                                onChange={e => setOpportunityUpdated(e.target.checked)}
+                            />
+                        </label>
+
+                        <h3>Deadline Reminders</h3>
+
+                        <label className="settings-option">
+                            <span>7 days before the deadline</span>
+                            <input
+                                type="checkbox"
+                                checked={deadline7Days}
+                                onChange={e => setDeadline7Days(e.target.checked)}
+                            />
+                        </label>
+
+                        <label className="settings-option">
+                            <span>3 days before the deadline</span>
+                            <input
+                                type="checkbox"
+                                checked={deadline3Days}
+                                onChange={e => setDeadline3Days(e.target.checked)}
+                            />
+                        </label>
+
+                        <label className="settings-option">
+                            <span>1 day before the deadline</span>
+                            <input
+                                type="checkbox"
+                                checked={deadline1Day}
+                                onChange={e => setDeadline1Day(e.target.checked)}
+                            />
+                        </label>
+
+                        <label className="settings-option">
+                            <span>On the deadline day</span>
+                            <input
+                                type="checkbox"
+                                checked={deadlineDay}
+                                onChange={e => setDeadlineDay(e.target.checked)}
+                            />
+                        </label>
+
+                        <h3>Application Notifications</h3>
+
+                        <label className="settings-option">
+                            <span>Application added confirmation</span>
+                            <input
+                                type="checkbox"
+                                checked={applicationAdded}
+                                onChange={e => setApplicationAdded(e.target.checked)}
+                            />
+                        </label>
+                        <label className="settings-option">
+                            <span>Application deleted notification</span>
+                            <input
+                                type="checkbox"
+                                checked={applicationDeleted}
+                                onChange={e => setApplicationDeleted(e.target.checked)}
+                            />
+                        </label>
+
+                        <h3>Account Security Notifications</h3>
+
+                        <label className="settings-option">
+                            <span>Password updated successfully</span>
+                            <input
+                                type="checkbox"
+                                checked={passwordUpdated}
+                                onChange={(e) =>
+                                    setPasswordUpdated(e.target.checked)
+                                }
+                            />
+                        </label>
+
+                    </div>
+
+                    <button
+                        className="save-settings-button"
+                        type="button"
+                        onClick={saveSettings}
+                    >
+                        <Save size={18} />   Save Settings
+                    </button>
+
+                </section>
+            </div>
+
+            {/* Separate blue box for Delete Account */}
+            <section className="settings-section danger-section">
+                <h2>Delete Account</h2>
+
+                <p>
+                    Remove your locally stored account information and
+                    student session from this browser.
+                </p>
+
+                <p className="settings-note">
+                    This frontend prototype cannot delete an account
+                    from the server or database.
+                </p>
+
+                <button
+                    className="delete-account-button"
+                    type="button"
+                    onClick={deleteAccount}
+                >
+                    <Trash2 size={18} />
+                </button>
+            </section>
         </div>
-
-        {/* Separate blue box for Delete Account */}
-        <section className="settings-section danger-section">
-            <h2>Delete Account</h2>
-
-            <p>
-                Remove your locally stored account information and
-                student session from this browser.
-            </p>
-
-            <p className="settings-note">
-                This frontend prototype cannot delete an account
-                from the server or database.
-            </p>
-
-            <button
-                className="delete-account-button"
-                type="button"
-                onClick={deleteAccount}
-            >
-             <Trash2 size={18} /> 
-            </button>
-        </section>
-    </div>
-);
+    );
 
 }
 

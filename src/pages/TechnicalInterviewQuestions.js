@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { ChevronLeft} from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import GoToTop from "../components/GoToTop";
 const TechnicalInterviewQuestions = () => {
   const navigate = useNavigate();
 
@@ -872,7 +873,7 @@ const TechnicalInterviewQuestions = () => {
     "What is a README file?"
   ];
 
-  
+
   const cGroups = [
     {
       title: "1. C Fundamentals",
@@ -1217,7 +1218,7 @@ const TechnicalInterviewQuestions = () => {
   return (
     <div className="resource-detail-page">
       <div className="resource-detail-container">
-       
+
         <div className="resource-detail-intro">
           <h1>TECHNICAL INTERVIEW QUESTIONS</h1>
           <p className="technical-intro-description">
@@ -1320,7 +1321,7 @@ const TechnicalInterviewQuestions = () => {
           </ul>
         </div>
 
-        
+
         <div className="resource-section">
           <h2>C Programming Interview Questions</h2>
           {cGroups.map((group) => (
@@ -1375,14 +1376,16 @@ const TechnicalInterviewQuestions = () => {
             />
           ))}
         </div>
- {/* Back button at the bottom */}
+        {/* Back button at the bottom */}
         <button
           className="back-resource-button"
           onClick={() => navigate("/career-resources")}
         >
-         <ChevronLeft size={18} />  Back to Career Resources
+          <ChevronLeft size={18} />  Back to Career Resources
         </button>
       </div>
+
+      <GoToTop />
     </div>
   );
 };

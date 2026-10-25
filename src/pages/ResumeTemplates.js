@@ -1,6 +1,7 @@
 
 import { Navigate, useNavigate } from "react-router-dom";
-import { ChevronLeft} from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import GoToTop from "../components/GoToTop";
 function ResumeTemplates() {
     const navigate = useNavigate();
 
@@ -36,35 +37,35 @@ function ResumeTemplates() {
                     </p>
 
                     <div className="resume-template-box">
-<div className="resume-contact-info">
-                        <h3>YOUR NAME</h3>
+                        <div className="resume-contact-info">
+                            <h3>YOUR NAME</h3>
 
-                        <p>
-                            Phone: +91 XXXXX XXXXX
-                            <br />
-                            Email: yourname@example.com
-                            <br />
-                            Location: City, State
-                            <br />
-                            LinkedIn:{" "}
-                            <a
-                                href="https://www.linkedin.com/"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                LinkedIn Profile
-                            </a>
-                            <br />
-                            GitHub:{" "}
-                            <a
-                                href="https://github.com/"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                GitHub Profile
-                            </a>
-                        </p>
-</div>
+                            <p>
+                                Phone: +91 XXXXX XXXXX
+                                <br />
+                                Email: yourname@example.com
+                                <br />
+                                Location: City, State
+                                <br />
+                                LinkedIn:{" "}
+                                <a
+                                    href="https://www.linkedin.com/"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    LinkedIn Profile
+                                </a>
+                                <br />
+                                GitHub:{" "}
+                                <a
+                                    href="https://github.com/"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    GitHub Profile
+                                </a>
+                            </p>
+                        </div>
                         <hr />
 
                         <h4>CAREER OBJECTIVE</h4>
@@ -156,20 +157,20 @@ function ResumeTemplates() {
 
                         <p>
                             <strong>GitHub Repository:</strong> GitHub Link
-                            
-                        </p>
-                        
-                       
-                            <p>
-    <strong>Project Highlights:</strong>
-</p>
 
-<ul>
-    <li>Important feature implemented in the project.</li>
-    <li>Technical problem solved or functionality developed.</li>
-    <li>Individual contribution to the project.</li>
-</ul>
-                     
+                        </p>
+
+
+                        <p>
+                            <strong>Project Highlights:</strong>
+                        </p>
+
+                        <ul>
+                            <li>Important feature implemented in the project.</li>
+                            <li>Technical problem solved or functionality developed.</li>
+                            <li>Individual contribution to the project.</li>
+                        </ul>
+
                         <h4>INTERNSHIPS / EXPERIENCE</h4>
 
                         <p>
@@ -217,35 +218,35 @@ function ResumeTemplates() {
                     </p>
 
                     <div className="resume-template-box">
-<div className="resume-contact-info">
-                        <h3>YOUR NAME</h3>
+                        <div className="resume-contact-info">
+                            <h3>YOUR NAME</h3>
 
-                        <p>
-                            Phone: +91 XXXXX XXXXX
-                            <br />
-                            Email: yourname@example.com
-                            <br />
-                            Location: City, State
-                            <br />
-                            LinkedIn:{" "}
-                            <a
-                                href="https://www.linkedin.com/"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                LinkedIn Profile
-                            </a>
-                            <br />
-                            GitHub:{" "}
-                            <a
-                                href="https://github.com/"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                GitHub Profile
-                            </a>
-                        </p>
-</div>
+                            <p>
+                                Phone: +91 XXXXX XXXXX
+                                <br />
+                                Email: yourname@example.com
+                                <br />
+                                Location: City, State
+                                <br />
+                                LinkedIn:{" "}
+                                <a
+                                    href="https://www.linkedin.com/"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    LinkedIn Profile
+                                </a>
+                                <br />
+                                GitHub:{" "}
+                                <a
+                                    href="https://github.com/"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    GitHub Profile
+                                </a>
+                            </p>
+                        </div>
                         <hr />
 
                         <h4>PROFESSIONAL SUMMARY</h4>
@@ -257,7 +258,7 @@ function ResumeTemplates() {
                             Interested in developing web applications
                             and contributing to software development projects.
                         </p>
-                        
+
                         <h4>EDUCATION</h4>
 
                         <p>
@@ -342,23 +343,23 @@ function ResumeTemplates() {
 
                         <p>
                             <strong>GitHub Repository: </strong> GitHub Link
-                            
-                        </p>
-                        
-                         <p>
-    <strong>Project Highlights:</strong>
-</p>
 
-<ul>
-    <li>Important feature implemented in the project.</li>
-    <li>Technical problem solved or functionality developed.</li>
-    <li>Individual contribution to the project.</li>
-</ul>
-                        
+                        </p>
+
+                        <p>
+                            <strong>Project Highlights:</strong>
+                        </p>
+
+                        <ul>
+                            <li>Important feature implemented in the project.</li>
+                            <li>Technical problem solved or functionality developed.</li>
+                            <li>Individual contribution to the project.</li>
+                        </ul>
+
                         <h4>INTERNSHIPS / EXPERIENCE</h4>
 
                         <p>
-                             Organization Name – Location
+                            Organization Name – Location
                             <br />
                             Role / Position
                             <br />
@@ -394,7 +395,7 @@ function ResumeTemplates() {
                 <div className="resource-section">
 
                     <h2>How to Choose a Template</h2>
-<br></br>
+                    <br></br>
                     <ul>
                         <li>
                             Choose Template 1 for a general fresher resume
@@ -443,12 +444,14 @@ function ResumeTemplates() {
                     className="back-resource-button"
                     onClick={() => navigate("/career-resources")}
                 >
-                  <ChevronLeft size={18} />   Back to Career Resources
+                    <ChevronLeft size={18} />   Back to Career Resources
                 </button>
 
             </div>
+            <GoToTop />
         </div>
     );
+
 }
 
 export default ResumeTemplates;

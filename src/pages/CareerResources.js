@@ -1,9 +1,21 @@
-import { useNavigate } from "react-router-dom";
-import {ArrowRight } from "lucide-react";
-function CareerResources() {
+/*
+ * CareerResources.jsx
+ * -------------------
+ * Displays career preparation resources available in SPIT.
+ * Students must log in to access individual resource pages.
+ */
 
+// Import the navigation hook from React Router.
+import { useNavigate } from "react-router-dom";
+
+// Import the arrow icon used on resource buttons.
+import { ArrowRight } from "lucide-react";
+
+function CareerResources() {
+    // Initialize navigation for opening resource pages.
     const navigate = useNavigate();
 
+    // Define the career resources displayed on this page.
     const resources = [
         {
             title: "Resume Tips",
@@ -43,35 +55,34 @@ function CareerResources() {
         }
     ];
 
-
+    /*
+     * Checks whether the current user is a logged-in student.
+     * Redirects unauthorized users to the login page.
+     */
     const handleView = (resource) => {
-
         const isStudent =
             localStorage.getItem("isLoggedIn") === "true" &&
             localStorage.getItem("userRole") === "student";
 
+        // Require student login before opening resource content.
         if (!isStudent) {
             alert(
                 "Please login as a student to access the resource content."
             );
 
             navigate("/login");
-
             return;
         }
 
-
+        // Navigate to the selected resource page.
         if (resource.path) {
             navigate(resource.path);
         }
-
     };
 
-
+    // Render the career resource cards.
     return (
-
         <div className="career-resources-container">
-
             <h1>CAREER RESOURCES</h1>
 
             <p className="career-resources-intro">
@@ -79,39 +90,31 @@ function CareerResources() {
                 Full Stack Development and software development roles.
             </p>
 
-    
+            {/* Display all available resources in a grid. */}
             <div className="resources-grid">
-
-                {resources.map((resource, index) => (
-
+                {resources.map((resource) => (
                     <div
                         className="resource-card"
-                        key={index}
+                        key={resource.path}
                     >
+                        {/* Resource title and description */}
+                        <h2>{resource.title}</h2>
 
-                        <h2>
-                            {resource.title}
-                        </h2>
+                        <p>{resource.description}</p>
 
-                        <p>
-                            {resource.description}
-                        </p>
-
-
+                        {/* Open the selected resource. */}
                         <button
                             onClick={() => handleView(resource)}
                         >
-                            <ArrowRight size={18} />View
+                            <ArrowRight size={18} />
+                            View
                         </button>
-
                     </div>
-
                 ))}
-
             </div>
-
         </div>
     );
 }
 
+// Export the component for use in application routes.
 export default CareerResources;

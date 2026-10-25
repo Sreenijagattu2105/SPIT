@@ -1,89 +1,287 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
-    BriefcaseBusiness,
     ClipboardCheck,
-    ChartNoAxesCombined,
     Bookmark,
-    BookOpen,
     UserRound,
-    FileText,
-    Bell,
-    Settings as SettingsIcon,
+    CalendarDays,
+    Clock,
+    CheckCircle2,
 } from "lucide-react";
 
+function LiveClock() {
+    const [time, setTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTime(new Date());
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, []);
+
+    return (
+        <h2 className="dashboard-live-clock">
+            {time.toLocaleTimeString("en-IN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+                timeZone: "Asia/Kolkata",
+            })}
+        </h2>
+    );
+}
+
 function StudentDashboard() {
-    const navigate = useNavigate();
+    const user = (() => {
+        try {
+            return JSON.parse(
+                localStorage.getItem("currentUser") || "{}"
+            );
+        } catch {
+            return {};
+        }
+    })();
 
-    const user =
-        JSON.parse(localStorage.getItem("registeredUser")) || {};
-
-    const [applicationCount, setApplicationCount] = useState(
-        JSON.parse(localStorage.getItem("startedApplications"))?.length || 0
-    );
-
-    const [savedCount, setSavedCount] = useState(
-        JSON.parse(localStorage.getItem("savedOpportunities"))?.length || 0
-    );
-
+    const [applicationCount, setApplicationCount] = useState(0);
+    const [savedCount, setSavedCount] = useState(0);
     const [profileCompletion, setProfileCompletion] = useState(0);
 
-    // Calculate Profile Completion
+    const [checklist, setChecklist] = useState({
+        coding: false,
+        interview: false,
+        updates: false,
+    });
+
+    const [studyPlan, setStudyPlan] = useState([]);
+    const [studySubject, setStudySubject] = useState("");
+    const [studyTime, setStudyTime] = useState("");
+    const [studyDescription, setStudyDescription] = useState("");
+
+    const studyPlanDate = new Date().toLocaleDateString("en-CA", {
+        timeZone: "Asia/Kolkata",
+    });
+
+    const studyPlanKey = `studentStudyPlan:${studyPlanDate}`;
+
     useEffect(() => {
-        const currentUser =
-            JSON.parse(localStorage.getItem("registeredUser")) || {};
-
-        let score = 0;
-
-        if (currentUser.name && currentUser.email && currentUser.phone) score += 20;
-        if (currentUser.resume) score += 20;
-        if (currentUser.skills) score += 20;
-        if (currentUser.projects) score += 20;
-        if (currentUser.certifications) score += 20;
-
-        setProfileCompletion(score);
-    }, []);
-
-    // Refresh dashboard counts when saved data changes
-    useEffect(() => {
-        const updateCounts = () => {
-            const applications = JSON.parse(
-                localStorage.getItem("startedApplications") || "[]"
-            );
-            const saved = JSON.parse(
-                localStorage.getItem("savedOpportunities") || "[]"
+        try {
+            const savedPlan = JSON.parse(
+                localStorage.getItem(studyPlanKey) || "[]"
             );
 
-            setApplicationCount(
-                Array.isArray(applications) ? applications.length : 0
-            );
-            setSavedCount(Array.isArray(saved) ? saved.length : 0);
+            setStudyPlan(Array.isArray(savedPlan) ? savedPlan : []);
+        } catch {
+            setStudyPlan([]);
+        }
+    }, [studyPlanKey]);
+
+    const saveStudyPlan = (updatedPlan) => {
+        setStudyPlan(updatedPlan);
+        localStorage.setItem(studyPlanKey, JSON.stringify(updatedPlan));
+    };
+
+    const addStudyTask = (event) => {
+        event.preventDefault();
+
+        if (!studySubject.trim() || !studyTime) {
+            return;
+        }
+
+        const newTask = {
+            id: `${Date.now()}-${Math.random()}`,
+            subject: studySubject.trim(),
+            time: studyTime,
+            description: studyDescription.trim(),
+            completed: false,
         };
 
-        window.addEventListener("dashboardDataUpdated", updateCounts);
-        window.addEventListener("savedOpportunitiesChange", updateCounts);
-        window.addEventListener("storage", updateCounts);
+        saveStudyPlan([...studyPlan, newTask]);
 
-        return () => {
-            window.removeEventListener("dashboardDataUpdated", updateCounts);
-            window.removeEventListener("savedOpportunitiesChange", updateCounts);
-            window.removeEventListener("storage", updateCounts);
+        setStudySubject("");
+        setStudyTime("");
+        setStudyDescription("");
+    };
+
+    const toggleStudyTask = (id) => {
+        saveStudyPlan(
+            studyPlan.map((task) =>
+                task.id === id
+                    ? { ...task, completed: !task.completed }
+                    : task
+            )
+        );
+    };
+
+    const deleteStudyTask = (id) => {
+        saveStudyPlan(studyPlan.filter((task) => task.id !== id));
+    };
+
+    // Load the student's profile and calculate completion.
+    useEffect(() => {
+        const loadProfileCompletion = async () => {
+            try {
+                const response = await fetch(
+                    "http://localhost:8080/spit-backend/api/student/profile",
+                    {
+                        method: "GET",
+                        credentials: "include",
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message || "Could not load profile."
+                    );
+                }
+
+                const fields = [
+                    data.full_name,
+                    data.email,
+                    data.phone,
+                    data.address,
+                    data.department,
+                    data.graduation_year,
+                    data.highest_qualification,
+                    data.institution_university,
+                    data.skills,
+                    data.projects,
+                    data.certifications,
+                    data.linkedin_url,
+                    data.github_url,
+                ];
+
+                const completedFields = fields.filter(
+                    (value) =>
+                        value !== null &&
+                        value !== undefined &&
+                        String(value).trim() !== ""
+                ).length;
+
+                const score = Math.round(
+                    (completedFields / fields.length) * 100
+                );
+
+                setProfileCompletion(score);
+            } catch (error) {
+                console.error(
+                    "Error loading profile completion:",
+                    error
+                );
+            }
         };
+
+        loadProfileCompletion();
     }, []);
 
-    // Reusable dashboard icon
+    // Load application and saved-opportunity counts from the backend.
+    useEffect(() => {
+        const updateCounts = async () => {
+            try {
+                const response = await fetch(
+                    "http://localhost:8080/spit-backend/api/student/dashboard-stats",
+                    {
+                        method: "GET",
+                        credentials: "include",
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                        "Could not load dashboard statistics."
+                    );
+                }
+
+                setApplicationCount(data.applicationCount ?? 0);
+                setSavedCount(data.savedCount ?? 0);
+            } catch (error) {
+                console.error(
+                    "Error loading dashboard statistics:",
+                    error
+                );
+            }
+        };
+
+        updateCounts();
+    }, []);
+
+    // Load today's checklist and keep it for the current date.
+    useEffect(() => {
+        const today = new Date().toLocaleDateString("en-CA", {
+            timeZone: "Asia/Kolkata",
+        });
+
+        const storageKey = `studentCareerChecklist:${today}`;
+
+        try {
+            const savedChecklist = JSON.parse(
+                localStorage.getItem(storageKey) || "null"
+            );
+
+            if (savedChecklist) {
+                setChecklist({
+                    coding: Boolean(savedChecklist.coding),
+                    interview: Boolean(savedChecklist.interview),
+                    updates: Boolean(savedChecklist.updates),
+                });
+            }
+        } catch (error) {
+            console.error("Unable to load checklist:", error);
+        }
+    }, []);
+
+    const handleChecklistChange = (name, checked) => {
+        const updatedChecklist = {
+            ...checklist,
+            [name]: checked,
+        };
+
+        setChecklist(updatedChecklist);
+
+        const today = new Date().toLocaleDateString("en-CA", {
+            timeZone: "Asia/Kolkata",
+        });
+
+        localStorage.setItem(
+            `studentCareerChecklist:${today}`,
+            JSON.stringify(updatedChecklist)
+        );
+    };
+
     const DashboardIcon = ({ icon: Icon }) => (
         <div className="dashboard-card-icon">
             <Icon size={34} strokeWidth={1.8} />
         </div>
     );
 
+    const today = new Date();
+
+    const formattedDate = today.toLocaleDateString("en-IN", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "Asia/Kolkata",
+    });
+
+    const completedTasks = Object.values(checklist).filter(Boolean).length;
+
     return (
         <div className="student-dashboard-container">
-
             {/* Dashboard Header */}
             <div className="dashboard-header">
-                <h1>Welcome, {user.name || "Student"}! 👋</h1>
+                <h1
+                    className="dashboard-welcome-title"
+                    title={`Welcome, ${user.name || "Student"}!`}
+                >
+                    Welcome, {user.name || "Student"}! 👋
+                </h1>
+
                 <p>
                     Manage your opportunities, applications and career
                     activities from one place.
@@ -93,153 +291,261 @@ function StudentDashboard() {
             {/* SECTION 1: Dashboard Summary */}
             <section className="dashboard-summary-section">
                 <h2 className="dashboard-section-title">
-                  
                     Dashboard Summary
                 </h2>
 
                 <div className="dashboard-stats">
                     <div className="dashboard-stat-card">
-                        <ClipboardCheck size={30} className="dashboard-stat-icon" />
+                        <ClipboardCheck
+                            size={30}
+                            className="dashboard-stat-icon"
+                        />
                         <h2>{applicationCount}</h2>
                         <p>Applications</p>
                     </div>
 
                     <div className="dashboard-stat-card">
-                        <Bookmark size={30} className="dashboard-stat-icon" />
+                        <Bookmark
+                            size={30}
+                            className="dashboard-stat-icon"
+                        />
                         <h2>{savedCount}</h2>
                         <p>Saved Opportunities</p>
                     </div>
 
                     <div className="dashboard-stat-card">
-                        <UserRound size={30} className="dashboard-stat-icon" />
+                        <UserRound
+                            size={30}
+                            className="dashboard-stat-icon"
+                        />
                         <h2>{profileCompletion}%</h2>
                         <p>Profile Completion</p>
 
                         <div className="profile-progress">
                             <div
                                 className="profile-progress-bar"
-                                style={{ width: `${profileCompletion}%` }}
-                            ></div>
+                                style={{
+                                    width: `${profileCompletion}%`,
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* SECTION 2: Dashboard Cards */}
+            {/* SECTION 2: Student Planner */}
             <section className="dashboard-main-section">
                 <h2 className="dashboard-section-title">
-                    
-                    Explore Your Dashboard
+                    Your Student Planner
                 </h2>
 
                 <div className="dashboard-cards">
-
+                    {/* Live Clock */}
                     <div className="dashboard-card">
-                        <DashboardIcon icon={BriefcaseBusiness} />
-                        <h2>Find Opportunities</h2>
+                        <DashboardIcon icon={Clock} />
+                        <h2>Current Time</h2>
+                        <LiveClock />
                         <p>
-                            Explore Full Stack Development jobs,
-                            internships and software development opportunities.
+                            Keep track of your day and manage your study
+                            time.
                         </p>
-                        <Link to="/opportunities">
-                            <button>Explore Opportunities</button>
-                        </Link>
                     </div>
 
+                    {/* Calendar */}
                     <div className="dashboard-card">
-                        <DashboardIcon icon={ClipboardCheck} />
-                        <h2>My Applications</h2>
-                        <p>
-                            View and track the opportunities you have
-                            applied for.
+                        <DashboardIcon icon={CalendarDays} />
+                        <h2>Today's Date</h2>
+                        <p className="dashboard-current-date">
+                            {formattedDate}
                         </p>
-                        <Link to="/my-applications">
-                            <button>View Applications</button>
-                        </Link>
+                        <p>
+                            Plan your preparation and placement activities.
+                        </p>
                     </div>
 
+                    {/* Daily Checklist */}
                     <div className="dashboard-card">
-                        <DashboardIcon icon={ChartNoAxesCombined} />
-                        <h2>Interview Progress</h2>
+                        <DashboardIcon icon={CheckCircle2} />
+                        <h2>Daily Career Checklist</h2>
+
                         <p>
-                            Track your interview rounds and update your status
-                            as you receive updates from companies.
+                            Completed: {completedTasks} of 3 tasks
                         </p>
-                        <button onClick={() => navigate("/interview-progress")}>
-                            View Interview Progress
-                        </button>
+
+                        <label className="dashboard-checklist-item">
+                            <input
+                                type="checkbox"
+                                checked={checklist.coding}
+                                onChange={(event) =>
+                                    handleChecklistChange(
+                                        "coding",
+                                        event.target.checked
+                                    )
+                                }
+                            />
+                            Practise coding
+                        </label>
+
+                        <label className="dashboard-checklist-item">
+                            <input
+                                type="checkbox"
+                                checked={checklist.interview}
+                                onChange={(event) =>
+                                    handleChecklistChange(
+                                        "interview",
+                                        event.target.checked
+                                    )
+                                }
+                            />
+                            Revise interview questions
+                        </label>
+
+                        <label className="dashboard-checklist-item">
+                            <input
+                                type="checkbox"
+                                checked={checklist.updates}
+                                onChange={(event) =>
+                                    handleChecklistChange(
+                                        "updates",
+                                        event.target.checked
+                                    )
+                                }
+                            />
+                            Check placement updates
+                        </label>
                     </div>
 
-                    <div className="dashboard-card">
-                        <DashboardIcon icon={Bookmark} />
-                        <h2>Saved Opportunities</h2>
-                        <p>
-                            View opportunities that you have saved for later.
-                        </p>
-                        <Link to="/saved-opportunities">
-                            <button>View Saved</button>
-                        </Link>
-                    </div>
 
-                    <div className="dashboard-card">
-                        <DashboardIcon icon={BookOpen} />
-                        <h2>Career Resources</h2>
-                        <p>
-                            Access resume tips, resume templates,
-                            interview preparation, HR questions,
-                            technical questions and aptitude resources.
-                        </p>
-                        <button onClick={() => navigate("/career-resources")}>
-                            View Resources
-                        </button>
-                    </div>
 
-                    <div className="dashboard-card">
-                        <DashboardIcon icon={UserRound} />
-                        <h2>My Profile</h2>
-                        <p>
-                            View and update your personal information,
-                            skills and career details.
-                        </p>
-                        <button onClick={() => navigate("/profile")}>
-                            View Profile
-                        </button>
-                    </div>
 
-                    <div className="dashboard-card">
-                        <DashboardIcon icon={FileText} />
-                        <h2>My Resume</h2>
-                        <p>
-                            Upload and manage your resume for Full Stack Development
-                            internships and placement opportunities.
-                        </p>
-                        <button onClick={() => navigate("/resume")}>
-                            View My Resume
-                        </button>
-                    </div>
+                    {/* Today's Study Plan */}
+                    <div className="dashboard-card student-study-plan-card">
+                        <DashboardIcon icon={CalendarDays} />
 
-                    <div className="dashboard-card">
-                        <DashboardIcon icon={Bell} />
-                        <h2>Notifications</h2>
-                        <p>
-                            View important updates about opportunities
-                            and your applications.
-                        </p>
-                        <button onClick={() => navigate("/notifications")}>
-                            View Notifications
-                        </button>
-                    </div>
+                        <h2>Today's Study Plan</h2>
+                        <p>Plan your study sessions and track your progress.</p>
 
-                    <div className="dashboard-card">
-                        <DashboardIcon icon={SettingsIcon} />
-                        <h2>Settings</h2>
-                        <p>
-                            Manage your account preferences and
-                            notification alerts.
-                        </p>
-                        <button onClick={() => navigate("/settings")}>
-                            Open Settings
-                        </button>
+                        <form className="study-plan-form" onSubmit={addStudyTask}>
+                            <div className="study-plan-input-group">
+                                <label htmlFor="studySubject">Subject / Topic</label>
+                                <input
+                                    id="studySubject"
+                                    type="text"
+                                    placeholder="e.g. Java, React, DSA"
+                                    value={studySubject}
+                                    onChange={(event) =>
+                                        setStudySubject(event.target.value)
+                                    }
+                                    required
+                                />
+                            </div>
+
+                            <div className="study-plan-input-group">
+                                <label htmlFor="studyTime">Study Time</label>
+                                <input
+                                    id="studyTime"
+                                    type="time"
+                                    value={studyTime}
+                                    onChange={(event) =>
+                                        setStudyTime(event.target.value)
+                                    }
+                                    required
+                                />
+                            </div>
+
+                            <div className="study-plan-input-group study-plan-description">
+                                <label htmlFor="studyDescription">
+                                    What will you study? (Optional)
+                                </label>
+                                <textarea
+                                    id="studyDescription"
+                                    placeholder="e.g. Revise inheritance and practise 5 questions"
+                                    value={studyDescription}
+                                    onChange={(event) =>
+                                        setStudyDescription(event.target.value)
+                                    }
+                                    rows="2"
+                                />
+                            </div>
+
+                            <button type="submit" className="study-plan-add-button">
+                                + Add Study Task
+                            </button>
+                        </form>
+
+                        <div className="study-plan-progress">
+                            <span>
+                                Progress: {studyPlan.filter((task) => task.completed).length}
+                                {" / "}
+                                {studyPlan.length} completed
+                            </span>
+
+                            <div className="study-plan-progress-track">
+                                <div
+                                    className="study-plan-progress-fill"
+                                    style={{
+                                        width: `${studyPlan.length
+                                                ? (studyPlan.filter(
+                                                    (task) => task.completed
+                                                ).length /
+                                                    studyPlan.length) *
+                                                100
+                                                : 0
+                                            }%`,
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="study-plan-task-list">
+                            {studyPlan.length === 0 ? (
+                                <p className="study-plan-empty">
+                                    Your study plan is empty. Add your first task above!
+                                </p>
+                            ) : (
+                                studyPlan.map((task) => (
+                                    <div
+                                        className={`study-plan-task ${task.completed ? "study-task-completed" : ""
+                                            }`}
+                                        key={task.id}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={task.completed}
+                                            onChange={() => toggleStudyTask(task.id)}
+                                            aria-label={`Mark ${task.subject} as completed`}
+                                        />
+
+                                        <div className="study-plan-task-info">
+                                            <strong>{task.subject}</strong>
+
+                                            <span>
+                                                {new Date(
+                                                    `2000-01-01T${task.time}`
+                                                ).toLocaleTimeString("en-IN", {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                })}
+                                            </span>
+
+                                            {task.description && (
+                                                <p>{task.description}</p>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            className="study-plan-delete-button"
+                                            onClick={() => deleteStudyTask(task.id)}
+                                            aria-label={`Delete ${task.subject}`}
+                                            title="Delete task"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
 
                 </div>

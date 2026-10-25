@@ -1,844 +1,697 @@
+// Import icons used by the reports page.
+import { RefreshCw, Download, ChevronLeft } from "lucide-react";
 
-import { RefreshCw, Download,  ChevronLeft } from "lucide-react";
+// Import React hooks.
 import { useEffect, useMemo, useState } from "react";
 
+// Import navigation.
 import { useNavigate } from "react-router-dom";
-
-
 
 function readLocalData(key) {
 
-          try {
-
-                    const data = JSON.parse(localStorage.getItem(key) || "[]");
-
-                    return Array.isArray(data) ? data : [];
-
-          } catch {
-
-                    return [];
-
-          }
-
+    try {
+        const data = JSON.parse(localStorage.getItem(key) || "[]");
+        return Array.isArray(data) ? data : [];
+    } catch {
+        return [];
+    }
 }
-
-
 
 function CoordinatorReports() {
 
-          const navigate = useNavigate();
+    const navigate = useNavigate();
+    const [students, setStudents] = useState([]);
+    const [opportunities, setOpportunities] = useState([]);
+    const [applications, setApplications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [search, setSearch] = useState("");
+    const [reportStats, setReportStats] = useState({
+        totalStudents: 0,
+        totalOpportunities: 0,
+        totalJobs: 0,
+        totalInternships: 0,
+        totalApplications: 0,
+        selectedStudents: 0
+    });
 
+    useEffect(() => {
+        async function loadReportData() {
+            try {
+                setLoading(true);
+                setError("");
 
-
-          const [students, setStudents] = useState(() =>
-
-                    readLocalData("students")
-
-          );
-
-
-
-          const [opportunities, setOpportunities] = useState(() =>
-
-                    readLocalData("opportunities")
-
-          );
-
-
-
-          const [applications, setApplications] = useState(() =>
-
-                    readLocalData("startedApplications")
-
-          );
-
-
-
-          const [search, setSearch] = useState("");
-
-          const [typeFilter, setTypeFilter] = useState("All");
-
-          const [statusFilter, setStatusFilter] = useState("All");
-
-
-
-          useEffect(() => {
-
-                    function loadReportData() {
-
-                              setStudents(readLocalData("students"));
-
-                              setOpportunities(readLocalData("opportunities"));
-
-                              setApplications(readLocalData("startedApplications"));
-
+                const response = await fetch(
+                    "http://localhost:8080/spit-backend/api/coordinator/applications",
+                    {
+                        method: "GET",
+                        credentials: "include"
                     }
+                );
 
-
-
-                    window.addEventListener("storage", loadReportData);
-
-                    window.addEventListener("dashboardDataUpdated", loadReportData);
-
-
-
-                    return () => {
-
-                              window.removeEventListener("storage", loadReportData);
-
-                              window.removeEventListener(
-
-                                        "dashboardDataUpdated",
-
-                                        loadReportData
-
-                              );
-
-                    };
-
-          }, []);
-
-
-
-          const getStatus = (application) =>
-
-                    String(application.status || "Applied");
-
-
-
-          const getType = (opportunity) =>
-
-                    String(
-
-                              opportunity.type ||
-
-                              opportunity.opportunityType ||
-
-                              "Job"
-
+                if (!response.ok) {
+                    throw new Error(
+                        `Unable to load applications (${response.status}).`
                     );
+                }
 
+                const data = await response.json();
 
+                // Fetch placement report statistics from the backend
+                const statsResponse = await fetch(
+                    "http://localhost:8080/spit-backend/api/coordinator/placement-report-stats",
+                    {
+                        method: "GET",
+                        credentials: "include"
+                    }
+                );
 
-          const totalJobs = opportunities.filter(
+                if (!statsResponse.ok) {
+                    throw new Error(
+                        `Unable to load placement statistics (${statsResponse.status}).`
+                    );
+                }
 
-                    (item) => getType(item).toLowerCase() === "job"
+                const stats = await statsResponse.json();
+                setReportStats(stats);
 
-          ).length;
+                const reportApplications = data.map((item) => ({
+                    ...item,
+                    status: String(item.status || "APPLIED"),
+                    type: item.opportunityType || item.type || "Job"
+                }));
+
+                setApplications(reportApplications);
+
+
+                // Derive unique students and opportunities from the
+                // applications returned by the backend.
+                setStudents(
+                    [...new Set(
+                        reportApplications
+                            .map((item) => item.studentEmail || item.studentId)
+                            .filter(Boolean)
+                    )]
+                );
+
+                setOpportunities(
+                    [...new Set(
+                        reportApplications
+                            .map((item) => item.opportunityId)
+                            .filter(Boolean)
+                    )]
+                );
+            } catch (err) {
+                console.error("Placement report error:", err);
+                setError(err.message || "Unable to load placement report.");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadReportData();
+    }, []);
+
+    const getStatus = (application) =>
+
+        String(application.status || "Applied");
+
+    const getType = (opportunity) =>
+
+        String(
+
+            opportunity.type ||
+
+            opportunity.opportunityType ||
+
+            "Job"
+
+        );
+
+    const totalJobs = reportStats.totalJobs;
+    const totalInternships = reportStats.totalInternships;
+
+    const selectedStudents = reportStats.selectedStudents;
 
+    const rejectedApplications = applications.filter(
 
+        (item) => getStatus(item).toLowerCase() === "rejected"
 
-          const totalInternships = opportunities.filter(
+    ).length;
 
-                    (item) => getType(item).toLowerCase().includes("internship")
 
-          ).length;
+    const inProgressApplications = applications.filter(
+        (item) => getStatus(item).toLowerCase() === "in_progress"
+    ).length;
 
 
+    const shortlistedApplications = applications.filter(
 
-          const selectedApplications = applications.filter((item) =>
-                    ["selected", "placed"].includes(
-                              getStatus(item).toLowerCase()
-                    )
-          ).length;
+        (item) => getStatus(item).toLowerCase() === "shortlisted"
 
-          // Count each selected student only once.
-          const selectedStudentKeys = new Set(
-                    applications
-                              .filter((item) =>
-                                        ["selected", "placed"].includes(
-                                                  getStatus(item).toLowerCase()
-                                        )
-                              )
-                              .map((item) =>
-                                        String(
-                                                  item.studentEmail ||
-                                                  item.email ||
-                                                  item.studentId ||
-                                                  item.studentName ||
-                                                  item.name ||
-                                                  ""
-                                        ).trim().toLowerCase()
-                              )
-                              .filter(Boolean)
-          );
+    ).length;
 
-          const selectedStudents = selectedStudentKeys.size;
+    const selectionRate =
+        students.length > 0
+            ? ((selectedStudents / students.length) * 100).toFixed(1)
+            : "0.0";
+    const selectedApplications = applications.filter(
+        (item) => getStatus(item).toUpperCase() === "SELECTED"
+    ).length;
 
-          const rejectedApplications = applications.filter(
+    const statusSummary = [
+        {
+            label: "Applied",
+            value: applications.filter(
+                (item) => getStatus(item).toLowerCase() === "applied"
+            ).length
+        },
+        {
+            label: "In Progress",
+            value: inProgressApplications
+        },
+        {
+            label: "Shortlisted",
+            value: shortlistedApplications
+        },
+        {
+            label: "Selected",
+            value: selectedApplications
+        },
+        {
+            label: "Rejected",
+            value: rejectedApplications
+        },
+        {
+            label: "Withdrawn",
+            value: applications.filter(
+                (item) => getStatus(item).toLowerCase() === "withdrawn"
+            ).length
+        }
+    ];
 
-                    (item) => getStatus(item).toLowerCase() === "rejected"
+    const filteredApplications = useMemo(() => {
+        const query = search.trim().toLowerCase();
 
-          ).length;
+        return applications.filter((application) => {
+            const searchableText = [
+                application.studentName,
+                application.name,
+                application.studentEmail,
+                application.email,
+                application.title,
+                application.company
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
 
+            return searchableText.includes(query);
+        });
+    }, [applications, search]);
 
+    function refreshReport() {
+        window.location.reload();
+    }
 
-          const pendingApplications = applications.filter((item) =>
+    function exportCSV() {
 
-                    ["pending", "applied", "under review"].includes(
+        const headers = [
 
-                              getStatus(item).toLowerCase()
+            "Student Name",
 
-                    )
+            "Student Email",
 
-          ).length;
+            "Opportunity",
 
+            "Company",
 
+            "Type",
 
-          const shortlistedApplications = applications.filter(
+            "Applied Date",
 
-                    (item) => getStatus(item).toLowerCase() === "shortlisted"
+            "Status"
 
-          ).length;
+        ];
 
+        const rows = filteredApplications.map((item) => [
 
+            item.studentName || item.name || "",
 
-          const selectionRate =
-                    students.length > 0
-                              ? ((selectedStudents / students.length) * 100).toFixed(1)
-                              : "0.0";
+            item.studentEmail || item.email || "",
 
+            item.title || "",
 
+            item.company || "",
 
-          const statusSummary = [
+            getType(item),
 
-                    { label: "Applied", value: applications.filter((item) => getStatus(item).toLowerCase() === "applied").length },
+            item.appliedDate || "",
 
-                    { label: "Pending", value: applications.filter((item) => getStatus(item).toLowerCase() === "pending").length },
+            getStatus(item)
 
-                    { label: "Under Review", value: applications.filter((item) => getStatus(item).toLowerCase() === "under review").length },
+        ]);
 
-                    { label: "Shortlisted", value: shortlistedApplications },
+        const escapeCSV = (value) =>
 
-                    { label: "Selected", value: selectedApplications },
+            `"${String(value).replace(/"/g, '""')}"`;
 
-                    { label: "Rejected", value: rejectedApplications }
+        const csvContent = [
 
-          ];
+            headers.map(escapeCSV).join(","),
 
+            ...rows.map((row) => row.map(escapeCSV).join(","))
 
+        ].join("\r\n");
 
-          const filteredApplications = useMemo(() => {
+        const blob = new Blob(["\uFEFF" + csvContent], {
 
-                    const query = search.trim().toLowerCase();
+            type: "text/csv;charset=utf-8;"
 
+        });
 
+        const url = URL.createObjectURL(blob);
 
-                    return applications.filter((application) => {
+        const link = document.createElement("a");
 
-                              const searchableText = [
+        link.href = url;
 
-                                        application.studentName,
+        link.download = "SPIT_Placement_Report.csv";
 
-                                        application.name,
+        document.body.appendChild(link);
 
-                                        application.studentEmail,
+        link.click();
 
-                                        application.email,
+        link.remove();
 
-                                        application.title,
+        URL.revokeObjectURL(url);
 
-                                        application.company
+    }
 
-                              ]
+    return (
 
-                                        .filter(Boolean)
+        <div className="coordinator-dashboard-container">
 
-                                        .join(" ")
+            {loading && <p>Loading placement report...</p>}
 
-                                        .toLowerCase();
+            {error && (
+                <p role="alert" style={{ color: "red" }}>
+                    {error}
+                </p>
+            )}
+            <div className="coordinator-page-heading">
 
+                <h1>PLACEMENT REPORTS</h1>
+            </div>
+            <section className="coordinator-welcome">
 
+                <p>
 
-                              const matchesSearch = searchableText.includes(query);
+                    View placement statistics, application progress
 
+                    and opportunity summaries.
 
+                </p>
+            </section>
+            {/* Overall summary */}
 
-                              const matchesType =
+            <section className="coordinator-summary">
 
-                                        typeFilter === "All" ||
+                <h2>Overall Summary</h2>
 
-                                        getType(application).toLowerCase() ===
+                <div className="coordinator-stats">
 
-                                                  typeFilter.toLowerCase();
+                    <div className="coordinator-stat-card">
 
+                        <h3>{reportStats.totalStudents}</h3>
 
+                        <hr />
 
-                              const matchesStatus =
+                        <p>Total Students</p>
 
-                                        statusFilter === "All" ||
-
-                                        getStatus(application).toLowerCase() ===
-
-                                                  statusFilter.toLowerCase();
-
-
-
-                              return matchesSearch && matchesType && matchesStatus;
-
-                    });
-
-          }, [applications, search, typeFilter, statusFilter]);
-
-
-
-          function refreshReport() {
-                    setStudents(readLocalData("students"));
-                    setOpportunities(readLocalData("opportunities"));
-                    setApplications(readLocalData("startedApplications"));
-                    alert("Placement report refreshed successfully.");
-          }
-
-          function exportCSV() {
-
-                    const headers = [
-
-                              "Student Name",
-
-                              "Student Email",
-
-                              "Opportunity",
-
-                              "Company",
-
-                              "Type",
-
-                              "Applied Date",
-
-                              "Status"
-
-                    ];
-
-
-
-                    const rows = filteredApplications.map((item) => [
-
-                              item.studentName || item.name || "",
-
-                              item.studentEmail || item.email || "",
-
-                              item.title || "",
-
-                              item.company || "",
-
-                              getType(item),
-
-                              item.appliedDate || "",
-
-                              getStatus(item)
-
-                    ]);
-
-
-
-                    const escapeCSV = (value) =>
-
-                              `"${String(value).replace(/"/g, '""')}"`;
-
-
-
-                    const csvContent = [
-
-                              headers.map(escapeCSV).join(","),
-
-                              ...rows.map((row) => row.map(escapeCSV).join(","))
-
-                    ].join("\r\n");
-
-
-
-                    const blob = new Blob(["\uFEFF" + csvContent], {
-
-                              type: "text/csv;charset=utf-8;"
-
-                    });
-
-
-
-                    const url = URL.createObjectURL(blob);
-
-                    const link = document.createElement("a");
-
-
-
-                    link.href = url;
-
-                    link.download = "SPIT_Placement_Report.csv";
-
-                    document.body.appendChild(link);
-
-                    link.click();
-
-                    link.remove();
-
-                    URL.revokeObjectURL(url);
-
-          }
-
-
-
-          return (
-
-                    <div className="coordinator-dashboard-container">
-
-
-
-                              
-                                        <div className="coordinator-page-heading">
-
-                                                  <h1>PLACEMENT REPORTS</h1>
-    </div>
-    <section className="coordinator-welcome">
-
-                                                  <p>
-
-                                                            View placement statistics, application progress
-
-                                                            and opportunity summaries.
-
-                                                  </p>
-
-                                    
-
-                              </section>
-
-
-
-                              {/* Overall summary */}
-
-                              <section className="coordinator-summary">
-
-                                        <h2>Overall Summary</h2>
-
-
-
-                                        <div className="coordinator-stats">
-
-                                                  <div className="coordinator-stat-card">
-
-                                                            <h3>{students.length}</h3>
-
-                                                            <hr />
-
-                                                            <p>Total Students</p>
-
-                                                            <small>Registered accounts</small>
-
-                                                  </div>
-
-
-
-                                                  <div className="coordinator-stat-card">
-
-                                                            <h3>{opportunities.length}</h3>
-
-                                                            <hr />
-
-                                                            <p>Total Opportunities</p>
-
-                                                            <small>Available listings</small>
-
-                                                  </div>
-
-
-
-                                                  <div className="coordinator-stat-card">
-
-                                                            <h3>{totalJobs}</h3>
-
-                                                            <hr />
-
-                                                            <p>Jobs</p>
-
-                                                            <small>Job opportunities</small>
-
-                                                  </div>
-
-
-
-                                                  <div className="coordinator-stat-card">
-
-                                                            <h3>{totalInternships}</h3>
-
-                                                            <hr />
-
-                                                            <p>Internships</p>
-
-                                                            <small>Internship opportunities</small>
-
-                                                  </div>
-
-
-
-                                                  <div className="coordinator-stat-card">
-
-                                                            <h3>{applications.length}</h3>
-
-                                                            <hr />
-
-                                                            <p>Total Applications</p>
-
-                                                            <small>Recorded applications</small>
-
-                                                  </div>
-
-
-
-                                                  <div className="coordinator-stat-card">
-
-                                                            <h3>{selectedStudents}</h3>
-
-                                                            <hr />
-
-                                                            <p>Selected / Placed</p>
-
-                                                            <small>Unique students marked selected / placed</small>
-
-                                                  </div>
-
-                                        </div>
-
-                              </section>
-
-
-
-                              {/* Application status summary */}
-
-                              <section className="coordinator-summary">
-
-                                        <h2>Application Status Report</h2>
-
-
-
-                                        <div className="coordinator-placement-snapshot">
-
-                                                  <div>
-
-                                                            <span>Selection Rate</span>
-
-                                                            <strong>{selectionRate}%</strong>
-
-                                                            <small>
-
-                                                                      Selected / placed applications divided by
-
-                                                                      all recorded applications
-
-                                                            </small>
-
-                                                  </div>
-
-
-
-                                                  <div>
-
-                                                            <span>Applications In Progress</span>
-
-                                                            <strong>{pendingApplications}</strong>
-
-                                                  </div>
-
-
-
-                                                  <div>
-
-                                                            <span>Shortlisted</span>
-
-                                                            <strong>{shortlistedApplications}</strong>
-
-                                                  </div>
-
-
-
-                                                  <div>
-
-                                                            <span>Rejected</span>
-
-                                                            <strong>{rejectedApplications}</strong>
-
-                                                  </div>
-
-                                        </div>
-
-
-
-                                        <div className="opportunity-table-wrapper">
-
-                                                  <table className="opportunity-management-table">
-
-                                                            <thead>
-
-                                                                      <tr>
-
-                                                                                <th>Application Status</th>
-
-                                                                                <th>Number of Applications</th>
-
-                                                                      </tr>
-
-                                                            </thead>
-
-
-
-                                                            <tbody>
-
-                                                                      {statusSummary.map((item) => (
-
-                                                                                <tr key={item.label}>
-
-                                                                                          <td>{item.label}</td>
-
-                                                                                          <td>{item.value}</td>
-
-                                                                                </tr>
-
-                                                                      ))}
-
-
-
-                                                                      <tr>
-
-                                                                                <th>Total</th>
-
-                                                                                <th>{applications.length}</th>
-
-                                                                      </tr>
-
-                                                            </tbody>
-
-                                                  </table>
-
-                                        </div>
-
-                              </section>
-
-
-
-                              {/* Detailed report */}
-
-                              <section className="coordinator-summary">
-
-                                        <h2>Detailed Application Report</h2>
-
-
-
-                                        <div className="opportunity-toolbar">
-
-                                                  <input
-
-                                                            type="search"
-
-                                                            placeholder="Search student, email, company or role..."
-
-                                                            aria-label="Search placement report"
-
-                                                            value={search}
-
-                                                            onChange={(event) => setSearch(event.target.value)}
-
-                                                  />
-
-
-
-                                                  <select
-
-                                                            aria-label="Filter by opportunity type"
-
-                                                            value={typeFilter}
-
-                                                            onChange={(event) => setTypeFilter(event.target.value)}
-
-                                                  >
-
-                                                            <option value="All">All Types</option>
-
-                                                            <option value="Job">Jobs</option>
-
-                                                            <option value="Internship">Internships</option>
-
-                                                  </select>
-
-
-
-                                                  <select
-
-                                                            aria-label="Filter by application status"
-
-                                                            value={statusFilter}
-
-                                                            onChange={(event) => setStatusFilter(event.target.value)}
-
-                                                  >
-
-                                                            <option value="All">All Statuses</option>
-
-
-
-                                                            {statusSummary.map((item) => (
-
-                                                                      <option key={item.label} value={item.label}>
-
-                                                                                {item.label}
-
-                                                                      </option>
-
-                                                            ))}
-
-                                                  </select>
-
-                                        </div>
-
-
-
-                                        <p>
-
-                                                  Showing {filteredApplications.length} of{" "}
-
-                                                  {applications.length} applications.
-
-                                        </p>
-
-
-
-                                        <div className="report-actions">
-                    <button type="button" onClick={refreshReport}>
-                    <RefreshCw size={18} />  Refresh Report
-                    </button>
-                    <button type="button" onClick={exportCSV}>
-                      <Download size={18} /> Export Report to CSV
-                    </button>
-                  </div>
-
-
-
-                                        {filteredApplications.length === 0 ? (
-
-                                                  <p>No applications match the selected filters.</p>
-
-                                        ) : (
-
-                                                  <div className="opportunity-table-wrapper">
-
-                                                            <table className="opportunity-management-table">
-
-                                                                      <thead>
-
-                                                                                <tr>
-
-                                                                                          <th>S.No.</th>
-
-                                                                                          <th>Student</th>
-
-                                                                                          <th>Email</th>
-
-                                                                                          <th>Opportunity</th>
-
-                                                                                          <th>Company</th>
-
-                                                                                          <th>Type</th>
-
-                                                                                          <th>Applied Date</th>
-
-                                                                                          <th>Status</th>
-
-                                                                                </tr>
-
-                                                                      </thead>
-
-
-
-                                                                      <tbody>
-
-                                                                                {filteredApplications.map((item, index) => (
-
-                                                                                          <tr
-
-                                                                                                    key={
-
-                                                                                                              item.applicationId ||
-
-                                                                                                              `${item.studentEmail || item.email || "student"}-${item.title || "opportunity"}-${index}`
-
-                                                                                                    }
-
-                                                                                          >
-
-                                                                                                    <td>{index + 1}</td>
-
-                                                                                                    <td>
-
-                                                                                                              {item.studentName ||
-
-                                                                                                                        item.name ||
-
-                                                                                                                        "Not provided"}
-
-                                                                                                    </td>
-
-                                                                                                    <td>
-
-                                                                                                              {item.studentEmail ||
-
-                                                                                                                        item.email ||
-
-                                                                                                                        "Not provided"}
-
-                                                                                                    </td>
-
-                                                                                                    <td>{item.title || "Not provided"}</td>
-
-                                                                                                    <td>{item.company || "Not provided"}</td>
-
-                                                                                                    <td>{getType(item)}</td>
-
-                                                                                                    <td>
-
-                                                                                                              {item.appliedDate || "Not recorded"}
-
-                                                                                                    </td>
-
-                                                                                                    <td>{getStatus(item)}</td>
-
-                                                                                          </tr>
-
-                                                                                ))}
-
-                                                                      </tbody>
-
-                                                            </table>
-
-                                                  </div>
-
-                                        )}
-
-                              </section>
-
-
-
-                              <section className="coordinator-back-section">
-
-                                        <button
-
-                                                  type="button"
-
-                                                  onClick={() => navigate("/coordinator-dashboard")}
-
-                                        >
-
-                                                  <ChevronLeft size={18} /> Back to Dashboard
-
-                                        </button>
-
-                              </section>
-
-
+                        <small>Students who applied</small>
 
                     </div>
 
-          );
+                    <div className="coordinator-stat-card">
 
+                        <h3>{reportStats.totalOpportunities}</h3>
+
+                        <hr />
+
+                        <p>Total Opportunities</p>
+
+                        <small>Available listings</small>
+
+                    </div>
+
+                    <div className="coordinator-stat-card">
+
+                        <h3>{totalJobs}</h3>
+
+                        <hr />
+
+                        <p>Jobs</p>
+
+                        <small>Job opportunities</small>
+
+                    </div>
+
+                    <div className="coordinator-stat-card">
+
+                        <h3>{totalInternships}</h3>
+
+                        <hr />
+
+                        <p>Internships</p>
+
+                        <small>Internship opportunities</small>
+
+                    </div>
+
+
+
+                    <div className="coordinator-stat-card">
+
+                        <h3>{reportStats.totalApplications}</h3>
+
+                        <hr />
+
+                        <p>Total Applications</p>
+
+                        <small>Recorded applications</small>
+
+                    </div>
+
+
+
+                    <div className="coordinator-stat-card">
+
+                        <h3>{selectedStudents}</h3>
+
+                        <hr />
+
+                        <p>Selected / Placed</p>
+
+                        <small>Unique students marked selected / placed</small>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            {/* Application status summary */}
+
+            <section className="coordinator-summary">
+
+                <h2>Application Status Report</h2>
+
+
+
+                <div className="coordinator-placement-snapshot">
+
+                    <div>
+
+                        <span>Selection Rate</span>
+
+                        <strong>{selectionRate}%</strong>
+
+                        <small>
+
+                            Selected / placed applications divided by
+
+                            all recorded applications
+
+                        </small>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <span>Applications In Progress</span>
+
+                        <strong>{inProgressApplications}</strong>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <span>Shortlisted</span>
+
+                        <strong>{shortlistedApplications}</strong>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <span>Rejected</span>
+
+                        <strong>{rejectedApplications}</strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <div className="opportunity-table-wrapper">
+
+                    <table className="opportunity-management-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Application Status</th>
+
+                                <th>Number of Applications</th>
+
+                            </tr>
+
+                        </thead>
+
+
+
+                        <tbody>
+
+                            {statusSummary.map((item) => (
+
+                                <tr key={item.label}>
+
+                                    <td>{item.label}</td>
+
+                                    <td>{item.value}</td>
+
+                                </tr>
+
+                            ))}
+
+
+
+                            <tr>
+
+                                <th>Total</th>
+
+                                <th>{applications.length}</th>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+
+            {/* Detailed report */}
+
+            <section className="coordinator-summary">
+
+                <h2>Detailed Application Report</h2>
+
+
+
+                <div className="opportunity-toolbar">
+
+                    <input
+
+                        type="search"
+
+                        placeholder="Search student, email, company or role..."
+
+                        aria-label="Search placement report"
+
+                        value={search}
+
+                        onChange={(event) => setSearch(event.target.value)}
+
+                    />
+
+
+
+
+
+
+
+
+
+                </div>
+
+
+
+                <p>
+
+                    Showing {filteredApplications.length} of{" "}
+
+                    {applications.length} applications.
+
+                </p>
+
+
+
+                <div className="report-actions">
+                    <button type="button" onClick={refreshReport}>
+                        <RefreshCw size={18} />  Refresh Report
+                    </button>
+                    <button type="button" onClick={exportCSV}>
+                        <Download size={18} /> Export Report to CSV
+                    </button>
+                </div>
+
+
+
+                {filteredApplications.length === 0 ? (
+
+                    <p>No applications match the selected filters.</p>
+
+                ) : (
+
+                    <div className="opportunity-table-wrapper">
+
+                        <table className="opportunity-management-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>S.No.</th>
+
+                                    <th>Student</th>
+
+                                    <th>Email</th>
+
+                                    <th>Opportunity</th>
+
+                                    <th>Company</th>
+
+                                    <th>Type</th>
+
+                                    <th>Applied Date</th>
+
+                                    <th>Status</th>
+
+                                </tr>
+
+                            </thead>
+
+
+
+                            <tbody>
+
+                                {filteredApplications.map((item, index) => (
+
+                                    <tr
+
+                                        key={
+
+                                            item.applicationId ||
+
+                                            `${item.studentEmail || item.email || "student"}-${item.title || "opportunity"}-${index}`
+
+                                        }
+
+                                    >
+
+                                        <td>{index + 1}</td>
+
+                                        <td>
+
+                                            {item.studentName ||
+
+                                                item.name ||
+
+                                                "Not provided"}
+
+                                        </td>
+
+                                        <td>
+
+                                            {item.studentEmail ||
+
+                                                item.email ||
+
+                                                "Not provided"}
+
+                                        </td>
+
+                                        <td>{item.title || "Not provided"}</td>
+
+                                        <td>{item.company || "Not provided"}</td>
+
+                                        <td>{getType(item)}</td>
+
+                                        <td>
+
+                                            {item.appliedDate || "Not recorded"}
+
+                                        </td>
+
+                                        <td>{getStatus(item)}</td>
+
+                                    </tr>
+
+                                ))}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                )}
+
+            </section>
+
+
+
+            <section className="coordinator-back-section">
+
+                <button
+
+                    type="button"
+
+                    onClick={() => navigate("/coordinator-dashboard")}
+                >
+                    <ChevronLeft size={18} /> Back to Dashboard
+
+                </button>
+
+            </section>
+        </div>
+
+    );
 }
-
-
 
 export default CoordinatorReports;
