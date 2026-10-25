@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ExternalLink, Trash2 } from "lucide-react";
-const STORAGE_KEY = "startedApplications";
-
 
 function getCurrentStudentEmail() {
     try {
@@ -13,69 +11,6 @@ function getCurrentStudentEmail() {
         return String(user?.email || "").trim().toLowerCase();
     } catch {
         return "";
-    }
-}
-
-function readApplications() {
-    try {
-        const data = JSON.parse(
-            localStorage.getItem(STORAGE_KEY) || "[]"
-        );
-
-        const email = getCurrentStudentEmail();
-
-        if (!Array.isArray(data) || !email) return [];
-
-        return data.filter(
-            application =>
-                String(application.studentEmail || "")
-                    .trim()
-                    .toLowerCase() === email
-        );
-    } catch {
-        return [];
-    }
-}
-
-function getApplicationKey(application) {
-    return [
-        String(application.studentEmail || "").toLowerCase(),
-        String(application.id || ""),
-        String(application.company || ""),
-        String(application.title || "")
-    ].join("|");
-}
-
-
-function addCoordinatorNotification(notification) {
-    try {
-        const stored = JSON.parse(
-            localStorage.getItem("coordinatorNotifications") || "[]"
-        );
-        const notifications = Array.isArray(stored) ? stored : [];
-
-        localStorage.setItem(
-            "coordinatorNotifications",
-            JSON.stringify([notification, ...notifications])
-        );
-
-        window.dispatchEvent(
-            new Event("coordinatorNotificationsChange")
-        );
-    } catch (error) {
-        console.error("Could not save coordinator notification:", error);
-    }
-}
-
-function readAllApplications() {
-    try {
-        const data = JSON.parse(
-            localStorage.getItem(STORAGE_KEY) || "[]"
-        );
-
-        return Array.isArray(data) ? data : [];
-    } catch {
-        return [];
     }
 }
 

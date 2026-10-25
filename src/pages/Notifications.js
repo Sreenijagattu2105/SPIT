@@ -107,47 +107,6 @@ function Notifications() {
         };
     }, [loadNotifications]);
 
-    const updateStudentNotifications = (updatedStudentNotifications) => {
-        const email = getLoggedInEmail();
-
-        if (!email) return;
-
-        try {
-            const stored = JSON.parse(
-                localStorage.getItem("notifications") || "[]"
-            );
-
-            const allNotifications = Array.isArray(stored) ? stored : [];
-
-            // Preserve notifications belonging to other students
-            // and hidden saved-opportunity notifications.
-            const otherNotifications = allNotifications.filter(
-                notification =>
-                    String(notification.studentEmail || "")
-                        .trim()
-                        .toLowerCase() !== email ||
-                    notification.type === "opportunity-saved"
-            );
-
-            localStorage.setItem(
-                "notifications",
-                JSON.stringify([
-                    ...otherNotifications,
-                    ...updatedStudentNotifications
-                ])
-            );
-
-            setNotifications(updatedStudentNotifications);
-
-            window.dispatchEvent(
-                new Event("notificationsChange")
-            );
-        } catch {
-            alert("Unable to update notifications.");
-        }
-    };
-
-
     const markAsRead = async (id) => {
         try {
             const response = await fetch(

@@ -73,30 +73,9 @@ function Opportunities() {
     const [sortBy, setSortBy] = useState("");
 
     const [allOpportunities, setAllOpportunities] = useState([]);
-
-    const [savedOpportunities, setSavedOpportunities] = useState(() => {
-
-        try {
-
-            const data = JSON.parse(
-
-                localStorage.getItem("savedOpportunities") || "[]"
-
-            );
-
-            return Array.isArray(data) ? data : [];
-
-        } catch {
-
-            return [];
-
-        }
-
-    });
-
-
-
-
+    
+    const [, setSavedOpportunities] = useState([]); 
+    
     useEffect(() => {
         let isActive = true;
 

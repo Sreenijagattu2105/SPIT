@@ -1,9 +1,5 @@
 // Import icons used in the coordinator dashboard.
 import {
-    Users,
-    BriefcaseBusiness,
-    ClipboardCheck,
-    ChartNoAxesCombined,
     CalendarDays,
     Clock
 } from "lucide-react";
@@ -41,8 +37,7 @@ function CoordinatorLiveClock() {
 
 function CoordinatorDashboard() {
     const navigate = useNavigate();
-    const [search] = useState("");
-
+    
     const [lastUpdated, setLastUpdated] = useState(new Date());
 
     const [dashboardStats, setDashboardStats] = useState({
@@ -225,46 +220,6 @@ function CoordinatorDashboard() {
         }
     ];
 
-    const actions = [
-        {
-            title: "Manage Students",
-            description:
-                "View student information and monitor placement readiness.",
-            button: "View Students",
-            path: "/coordinator/students",
-            icon: Users
-        },
-        {
-            title: "Manage Opportunities",
-            description:
-                "Add, update and remove job and internship opportunities.",
-            button: "Manage Opportunities",
-            path: "/coordinator/opportunities",
-            icon: BriefcaseBusiness
-        },
-        {
-            title: "Track Applications",
-            description:
-                "Review student applications and update their status.",
-            button: "View Applications",
-            path: "/coordinator/applications",
-            icon: ClipboardCheck
-        },
-        {
-            title: "Placement Reports",
-            description:
-                "Review placement statistics and application progress.",
-            button: "View Reports",
-            path: "/coordinator/reports",
-            icon: ChartNoAxesCombined
-        }
-    ];
-
-    const filteredActions = actions.filter((action) =>
-        `${action.title} ${action.description} ${action.button}`
-            .toLowerCase()
-            .includes(search.trim().toLowerCase())
-    );
 
     return (
 

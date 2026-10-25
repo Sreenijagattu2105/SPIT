@@ -7,21 +7,12 @@ import { useEffect, useMemo, useState } from "react";
 // Import navigation.
 import { useNavigate } from "react-router-dom";
 
-function readLocalData(key) {
 
-    try {
-        const data = JSON.parse(localStorage.getItem(key) || "[]");
-        return Array.isArray(data) ? data : [];
-    } catch {
-        return [];
-    }
-}
 
 function CoordinatorReports() {
 
     const navigate = useNavigate();
     const [students, setStudents] = useState([]);
-    const [opportunities, setOpportunities] = useState([]);
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -94,13 +85,7 @@ function CoordinatorReports() {
                     )]
                 );
 
-                setOpportunities(
-                    [...new Set(
-                        reportApplications
-                            .map((item) => item.opportunityId)
-                            .filter(Boolean)
-                    )]
-                );
+                
             } catch (err) {
                 console.error("Placement report error:", err);
                 setError(err.message || "Unable to load placement report.");

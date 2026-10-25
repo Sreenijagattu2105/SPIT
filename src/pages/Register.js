@@ -49,121 +49,88 @@ function Register() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
+    
+const handleRegister = async (e) => {
+    e.preventDefault();
 
-        const cleanName = name.trim();
-        const cleanEmail = email.trim().toLowerCase();
-        const cleanPhone = phone.trim();
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phone.trim();
 
-        const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phonePattern = /^[0-9]{10}$/;
+    const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phonePattern = /^[0-9]{10}$/;
 
-        if (!cleanName) {
-            alert("Please enter your name.");
-            return;
-        }
-
-        if (cleanName.length < 2 || cleanName.length > 50) {
-            alert("Name must be between 2 and 50 characters.");
-            return;
-        }
-
-        if (!namePattern.test(cleanName)) {
-            alert("Name should contain only letters and single spaces between words.");
-            return;
-        }
-
-        if (!cleanEmail || !emailPattern.test(cleanEmail)) {
-            alert("Please enter a valid email address.");
-            return;
-        }
-
-        if (!phonePattern.test(cleanPhone)) {
-            alert("Phone number must contain exactly 10 digits.");
-            return;
-        }
-
-        if (password.length < 8) {
-            alert("Password must contain at least 8 characters.");
-            return;
-        }
-
-        const numberCount = (password.match(/[0-9]/g) || []).length;
-
-        if (numberCount < 2) {
-            alert("Password must contain at least 2 numbers.");
-            return;
-        }
-
-        if (!confirmPassword) {
-            alert("Please confirm your password.");
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            alert("Passwords do not match.");
-            return;
-        }
-
-
-        try {
-            const response = await fetch(
-                "http://localhost:8080/spit-backend/api/auth/register",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        fullName: cleanName,
-                        email: cleanEmail,
-                        phone: cleanPhone,
-                        password: password
-                    })
-                }
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                alert(data.message || "Registration failed.");
-                return;
-            }
-
-            const date = new Date().toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric"
-            });
-
-            addCoordinatorNotification({
-                id: Date.now(),
-                message: `New student registered: ${cleanName} (${cleanEmail}).`,
-                date,
-                read: false,
-                type: "student-registration",
-                studentEmail: cleanEmail
-            }, "registeredAccount");
-
-            window.dispatchEvent(new Event("dashboardDataUpdated"));
-
-            alert("Registration successful! Please login.");
-            navigate("/login");
-
-            alert("Registration successful! Please login.");
-            navigate("/login");
-
-        } catch (error) {
-            console.error("Registration failed:", error);
-            alert(
-                "Unable to connect to the server. Please ensure the backend is running."
-            );
-        }
-
+    if (!cleanName) {
+        alert("Please enter your name.");
         return;
+    }
 
+    if (cleanName.length < 2 || cleanName.length > 50) {
+        alert("Name must be between 2 and 50 characters.");
+        return;
+    }
+
+    if (!namePattern.test(cleanName)) {
+        alert("Name should contain only letters and single spaces between words.");
+        return;
+    }
+
+    if (!cleanEmail || !emailPattern.test(cleanEmail)) {
+        alert("Please enter a valid email address.");
+        return;
+    }
+
+    if (!phonePattern.test(cleanPhone)) {
+        alert("Phone number must contain exactly 10 digits.");
+        return;
+    }
+
+    if (password.length < 8) {
+        alert("Password must contain at least 8 characters.");
+        return;
+    }
+
+    const numberCount = (password.match(/[0-9]/g) || []).length;
+
+    if (numberCount < 2) {
+        alert("Password must contain at least 2 numbers.");
+        return;
+    }
+
+    if (!confirmPassword) {
+        alert("Please confirm your password.");
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        alert("Passwords do not match.");
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            "http://localhost:8080/spit-backend/api/auth/register",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    fullName: cleanName,
+                    email: cleanEmail,
+                    phone: cleanPhone,
+                    password: password
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.message || "Registration failed.");
+            return;
+        }
 
         const date = new Date().toLocaleDateString("en-GB", {
             day: "2-digit",
@@ -171,22 +138,32 @@ function Register() {
             year: "numeric"
         });
 
-
-        addCoordinatorNotification({
-            id: Date.now() + 1,
-            message: `New student registered: ${cleanName} (${cleanEmail}).`,
-            date,
-            read: false,
-            type: "student-registration",
-            studentEmail: cleanEmail
-        }, "registeredAccount");
-
+        addCoordinatorNotification(
+            {
+                id: Date.now(),
+                message: `New student registered: ${cleanName} (${cleanEmail}).`,
+                date,
+                read: false,
+                type: "student-registration",
+                studentEmail: cleanEmail
+            },
+            "registeredAccount"
+        );
 
         window.dispatchEvent(new Event("dashboardDataUpdated"));
 
         alert("Registration successful! Please login.");
         navigate("/login");
-    };
+
+    } catch (error) {
+        console.error("Registration failed:", error);
+
+        alert(
+            "Unable to connect to the server. Please ensure the backend is running."
+        );
+    }
+};
+
 
 
     return (

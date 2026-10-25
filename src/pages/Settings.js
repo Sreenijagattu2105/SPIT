@@ -4,23 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { UserRound, Trash2, Save, RefreshCw } from "lucide-react";
 function Settings() {
     const navigate = useNavigate();
-    const getLoggedInEmail = () => {
-        try {
-            const currentUser = JSON.parse(
-                localStorage.getItem("currentUser") || "null"
-            );
-
-            const registeredUser = JSON.parse(
-                localStorage.getItem("registeredUser") || "null"
-            );
-
-            return String(
-                currentUser?.email || registeredUser?.email || ""
-            ).trim().toLowerCase();
-        } catch {
-            return "";
-        }
-    };
+    
     const [opportunityPublished, setOpportunityPublished] = useState(true);
     const [opportunityUpdated, setOpportunityUpdated] = useState(true);
 

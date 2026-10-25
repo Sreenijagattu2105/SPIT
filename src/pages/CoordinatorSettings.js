@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { KeyRound, Save, ChevronLeft } from "lucide-react";
 
 const PROFILE_KEY = "coordinatorSettings";
-const PREFERENCES_KEY = "coordinatorNotificationPreferences";
+
 const PREFERENCES_API =
     "http://localhost:8080/spit-backend/api/coordinator/notifications/preferences";
 const DEFAULT_PREFERENCES = {

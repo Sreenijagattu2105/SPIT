@@ -337,30 +337,6 @@ function InterviewProgress() {
     window.alert(text);
   }
 
-  function saveProgress(updatedProgress) {
-    try {
-      localStorage.setItem(
-        PROGRESS_KEY,
-        JSON.stringify(updatedProgress)
-      );
-
-      setProgress(updatedProgress);
-
-      window.dispatchEvent(new Event("dashboardDataUpdated"));
-
-      return true;
-    } catch (error) {
-      console.error("Could not save interview progress:", error);
-
-      showMessage(
-        "Unable to save interview progress. Please check your browser storage."
-      );
-
-      return false;
-    }
-  }
-
-
   async function addRound(event) {
     event.preventDefault();
 

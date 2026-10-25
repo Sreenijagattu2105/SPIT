@@ -1,17 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-function getCurrentStudentEmail() {
-  try {
-    const user = JSON.parse(
-      localStorage.getItem("currentUser") || "null"
-    );
-
-    return String(user?.email || "").trim().toLowerCase();
-  } catch {
-    return "";
-  }
-}
 
 function SavedOpportunities() {
   const [savedOpportunities, setSavedOpportunities] = useState([]);

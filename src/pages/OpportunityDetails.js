@@ -8,30 +8,13 @@ import {
 
 } from "react-router-dom";
 import {
-    GraduationCap, ChevronLeft, ExternalLink,
+    GraduationCap,  ExternalLink,
     CheckCircle,
     Check
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 
-
-function getAllOpportunities() {
-    let coordinatorOpportunities = [];
-
-    try {
-        const data = JSON.parse(
-            localStorage.getItem("opportunities") || "[]"
-        );
-
-        coordinatorOpportunities = Array.isArray(data) ? data : [];
-    } catch {
-        coordinatorOpportunities = [];
-    }
-
-    // Return coordinator opportunities stored locally.
-    return coordinatorOpportunities;
-}
 
 
 function getStoredArray(key) {

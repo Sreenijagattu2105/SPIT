@@ -15,7 +15,6 @@ function Profile() {
     const [skills, setSkills] = useState("");
     const [projects, setProjects] = useState("");
     const [certifications, setCertifications] = useState("");
-    const [resume, setResume] = useState("");
     const [linkedin, setLinkedin] = useState("");
     const [github, setGithub] = useState("");
     const [isEditing, setIsEditing] = useState(false);
@@ -158,7 +157,6 @@ function Profile() {
             skills: skills.trim(),
             projects: projects.trim(),
             certifications: certifications.trim(),
-            resume: resume,
             linkedin: linkedin.trim(),
             github: github.trim()
         };
@@ -174,7 +172,6 @@ function Profile() {
             "skills",
             "projects",
             "certifications",
-            "resume",
             "linkedin",
             "github"
         ];
@@ -182,10 +179,6 @@ function Profile() {
         const profileChanged = fieldsToCheck.some(field => {
             const oldValue = profileUser[field] ?? "";
             const newValue = updatedUser[field] ?? "";
-
-            if (field === "resume") {
-                return oldValue !== newValue;
-            }
 
             return String(oldValue).trim() !== String(newValue).trim();
         });
@@ -201,7 +194,6 @@ function Profile() {
             skills: "Skills",
             projects: "Projects",
             certifications: "Certifications",
-            resume: "Resume",
             linkedin: "LinkedIn Profile",
             github: "GitHub Profile"
         };
@@ -216,16 +208,12 @@ function Profile() {
                 const oldValue = profileUser[field] ?? "";
                 const newValue = updatedUser[field] ?? "";
 
-                if (field === "resume") {
-                    return oldValue !== newValue;
-                }
+                
 
                 return String(oldValue).trim() !== String(newValue).trim();
             })
             .map(field => {
-                if (field === "resume") {
-                    return `Resume: ${updatedUser.resume ? "Updated" : "Removed"}`;
-                }
+                
 
                 const oldValue = formatProfileValue(profileUser[field]);
                 const newValue = formatProfileValue(updatedUser[field]);

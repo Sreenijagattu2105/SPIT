@@ -10,7 +10,7 @@
 import { useEffect, useState } from "react";
 
 // Import navigation components from React Router.
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 // Import icons from Lucide React.
 import {
@@ -100,9 +100,6 @@ const links = [
  * and provides logout functionality.
  */
 export default function StudentIconNavbar() {
-
-    // Used to navigate programmatically between routes.
-    const navigate = useNavigate();
 
     // Store the current number of unread student notifications.
     const [unreadCount, setUnreadCount] = useState(0);
